@@ -190,6 +190,10 @@ main{flex:1;overflow-y:auto;padding:36px 40px}
           <svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1" fill="currentColor"/><rect x="1" y="9" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor"/></svg>
           Mediateque
         </button>
+        <button class="aside-link" id="linkBureau" onclick="showPage('bureau',this)">
+          <svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M2.5 14c0-3 2.4-5 5.5-5s5.5 2 5.5 5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Photos du Bureau
+        </button>
         <button class="aside-link" id="linkInfo" onclick="showPage('info',this)">
           <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="8" y1="7" x2="8" y2="11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="5" r=".8" fill="currentColor"/></svg>
           Informations
@@ -204,6 +208,10 @@ main{flex:1;overflow-y:auto;padding:36px 40px}
         <a class="aside-link" href="index2.html" target="_blank">
           <svg viewBox="0 0 16 16"><rect x="1" y="2" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="1" y1="6" x2="15" y2="6" stroke="currentColor" stroke-width="1.3"/></svg>
           Site v2
+        </a>
+        <a class="aside-link" href="bureau.html" target="_blank">
+          <svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 14c0-3 2.4-5 5.5-5s5.5 2 5.5 5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Page Bureau
         </a>
       </div>
       <div class="aside-bottom">
@@ -236,6 +244,7 @@ main{flex:1;overflow-y:auto;padding:36px 40px}
           <button class="ftab" onclick="loadFolder('pedagogique',this)">Pedagogique</button>
           <button class="ftab" onclick="loadFolder('finances',this)">Finances</button>
           <button class="ftab" onclick="loadFolder('videos',this)">Videos</button>
+          <button class="ftab" onclick="loadFolder('bureau',this)">Bureau</button>
         </div>
 
         <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
@@ -278,6 +287,20 @@ main{flex:1;overflow-y:auto;padding:36px 40px}
           </ol>
         </div>
       </div>
+
+      <!-- BUREAU PHOTOS PAGE -->
+      <div id="pageBureau" style="display:none">
+        <div class="page-header">
+          <h1>Photos du Bureau</h1>
+          <p>Choisissez ou remplacez la photo de chaque membre &mdash; elle s'affiche aussitot sur la page Bureau du site</p>
+        </div>
+        <div id="bureauToken" style="border-radius:10px;padding:14px 18px;margin-bottom:28px;font-size:.8rem;background:rgba(224,156,82,.08);border:1px solid rgba(224,156,82,.2);color:var(--warn)">
+          Connectez votre GitHub Token dans l'onglet Mediatheque pour pouvoir enregistrer les photos.
+        </div>
+        <div class="media-grid" id="bureauGrid">
+          <div class="media-loading">Chargement des membres...</div>
+        </div>
+      </div>
     </main>
 
   </div>
@@ -294,6 +317,9 @@ main{flex:1;overflow-y:auto;padding:36px 40px}
     </div>
   </div>
 </div>
+
+<input type="file" id="replaceInput" accept="image/*,video/mp4,video/webm" style="display:none">
+<input type="file" id="memberInput" accept="image/*" style="display:none">
 
 <div id="toast"></div>
 
@@ -358,9 +384,11 @@ function setTokenOK(){
 function showPage(name,btn){
   document.getElementById('pageMedia').style.display=name==='media'?'':'none';
   document.getElementById('pageInfo').style.display=name==='info'?'':'none';
+  document.getElementById('pageBureau').style.display=name==='bureau'?'':'none';
   document.querySelectorAll('.aside-link').forEach(l=>l.classList.remove('active'));
   if(btn)btn.classList.add('active');
   document.getElementById('sidebar').classList.remove('open');
+  if(name==='bureau')renderBureau();
 }
 
 /* SIDEBAR MOBILE */
@@ -409,7 +437,7 @@ function renderMedia(files,folder){
       ?`<div class="media-thumb"><video src="${f.download_url}" muted preload="none"></video><div class="play-icon"><svg viewBox="0 0 24 24"><polygon points="6,3 21,12 6,21"/></svg></div></div>`
       :`<div class="media-thumb"><img src="${f.download_url}" alt="${f.name}" loading="lazy"></div>`;
     const sz=f.size>1024*1024?(f.size/1024/1024).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB';
-    return `<div class="media-card">${thumb}<div class="media-info"><div class="media-name" title="${f.name}">${f.name}</div><div class="media-size">${sz}</div><div class="media-actions"><a class="media-btn" href="${f.download_url}" target="_blank">Voir</a><button class="media-btn del" onclick="confirmDelete('${f.path}','${f.sha}','${f.name}')">Supprimer</button></div></div></div>`;
+    return `<div class="media-card">${thumb}<div class="media-info"><div class="media-name" title="${f.name}">${f.name}</div><div class="media-size">${sz}</div><div class="media-actions"><a class="media-btn" href="${f.download_url}" target="_blank">Voir</a><button class="media-btn" onclick="startReplace('${f.path}','${f.sha}','${f.name}')">Remplacer</button><button class="media-btn del" onclick="confirmDelete('${f.path}','${f.sha}','${f.name}')">Supprimer</button></div></div></div>`;
   }).join('');
 }
 
@@ -502,6 +530,93 @@ function toast(msg,type='ok'){
   clearTimeout(toastT);
   toastT=setTimeout(()=>el.className='',3500);
 }
+
+/* ============ REMPLACER UN FICHIER PRECIS ============ */
+let pendingReplace=null;
+function startReplace(path,sha,name){
+  if(!ghToken){toast('Connectez GitHub d\'abord','err');return;}
+  pendingReplace={path,sha,name};
+  document.getElementById('replaceInput').click();
+}
+document.getElementById('replaceInput').addEventListener('change',async e=>{
+  const file=e.target.files[0];e.target.value='';
+  if(!file||!pendingReplace){pendingReplace=null;return;}
+  const t=pendingReplace;pendingReplace=null;
+  if(file.size>25*1024*1024){toast('Fichier trop lourd (max 25MB)','err');return;}
+  try{
+    const b64=await toBase64(file);
+    let sha=t.sha;
+    try{const ex=await ghFetch(t.path);sha=ex.sha;}catch(_){}
+    await ghFetch(t.path,{method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:'Replace '+t.name+' via PHA admin',content:b64,branch:BRANCH,sha})});
+    toast(t.name+' remplace','ok');
+    setTimeout(()=>loadFolder(currentFolder,null),1000);
+  }catch(err){toast('Erreur : '+err.message,'err');}
+});
+
+/* ============ PHOTOS DU BUREAU ============ */
+const EXEC_A=[
+  {role:'President',name:'Omar Ba'},
+  {role:'Vice-President',name:'Amady Dieng'}
+];
+const COMM_A=[
+  {short:'Secretariat',members:['Ousmane Diallo','Ndiakhate Khouma']},
+  {short:'Pedagogique',members:['Kaima Moussa Faye','Adama Fall','Ousmane Niang','Ablaye Sow','Astou Badji']},
+  {short:'Presse / Infos',members:['Khadija Diaw','Mankeur Sarr','Awa Badji','Aminata Diouf']},
+  {short:'Finances',members:['Mor Thiam','Adama Sow','Sada Sall Diouf']},
+  {short:'Organisation',members:['Mbayang Khouma','Mouhamed Lo','Oumy Diakhate','Mata Seck','Marie Khady Faye','Marie Sophie','Khady Fall']},
+  {short:'Sociale',members:['Momar Diop','Khalil Sylla','Fatima Diallo','Tine Dia','Cheikh Saliou Diao']},
+  {short:'Relations Ext.',members:['Talla Diagne','Jeanne Mbengue','Mamadou Ndiaye','Aissatou Diaby']},
+  {short:'Feminine',members:['Khady Gueye','Khadija Sarr','Seynabou Ndiaye','Faby Diop','Khadija Diongue','Anne Merveille']},
+  {short:'Sport & Loisirs',members:['Babacar Ka','Bocar Lincoln']},
+  {short:'Comptes',members:['Pascal Bruno Ndione','Khadim Ndiaye']}
+];
+function slugA(name){return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');}
+function iniA(name){const p=name.trim().split(/\s+/);return (((p[0]||'')[0]||'')+((p[1]||p[0]||'')[0]||'')).toUpperCase();}
+function hueA(name){let h=0;for(let i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))>>>0;return 162+(h%46);}
+
+let pendingMember=null;
+function renderBureau(){
+  const bar=document.getElementById('bureauToken');
+  if(ghToken){bar.style.background='rgba(40,200,214,.06)';bar.style.borderColor='rgba(40,200,214,.2)';bar.style.color='var(--teal)';bar.textContent='GitHub connecte : choisissez une photo pour chaque membre.';}
+  else{bar.style.background='rgba(224,156,82,.08)';bar.style.borderColor='rgba(224,156,82,.2)';bar.style.color='var(--warn)';bar.textContent="Connectez votre GitHub Token dans l'onglet Mediatheque pour pouvoir enregistrer les photos.";}
+  const all=[...EXEC_A.map(e=>({name:e.name,tag:e.role})),
+    ...COMM_A.flatMap(c=>c.members.map(m=>({name:m,tag:c.short})))];
+  document.getElementById('bureauGrid').innerHTML=all.map(p=>{
+    const s=slugA(p.name),h=hueA(p.name),ini=iniA(p.name);
+    const raw='https://raw.githubusercontent.com/'+REPO_OWNER+'/'+REPO_NAME+'/'+BRANCH+'/media/bureau/'+s+'.jpg?t='+Date.now();
+    const ne=p.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<div class="media-card"><div class="media-thumb">'
+      +'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:900;font-size:1.7rem;color:hsl('+h+',58%,68%);background:linear-gradient(150deg,hsl('+h+',40%,16%),hsl('+h+',46%,9%))">'+ini+'</div>'
+      +'<img src="'+raw+'" alt="" loading="lazy" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">'
+      +'</div><div class="media-info"><div class="media-name" title="'+p.name+'">'+p.name+'</div>'
+      +'<div class="media-size">'+p.tag+'</div>'
+      +'<div class="media-actions"><button class="media-btn" onclick="pickMember(\''+s+'\',\''+ne+'\')">Choisir / Remplacer</button></div>'
+      +'</div></div>';
+  }).join('');
+}
+function pickMember(s,name){
+  if(!ghToken){toast('Connectez GitHub d\'abord','err');return;}
+  pendingMember={slug:s,name:name};
+  document.getElementById('memberInput').click();
+}
+document.getElementById('memberInput').addEventListener('change',async e=>{
+  const file=e.target.files[0];e.target.value='';
+  if(!file||!pendingMember){pendingMember=null;return;}
+  const m=pendingMember;pendingMember=null;
+  if(file.size>25*1024*1024){toast('Photo trop lourde (max 25MB)','err');return;}
+  const path='media/bureau/'+m.slug+'.jpg';
+  try{
+    const b64=await toBase64(file);
+    let sha=null;
+    try{const ex=await ghFetch(path);sha=ex.sha;}catch(_){}
+    const body={message:'Photo membre '+m.name+' via PHA admin',content:b64,branch:BRANCH};
+    if(sha)body.sha=sha;
+    await ghFetch(path,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    toast('Photo de '+m.name+' enregistree','ok');
+    setTimeout(renderBureau,1400);
+  }catch(err){toast('Erreur : '+err.message,'err');}
+});
 </script>
 </body>
 </html>
