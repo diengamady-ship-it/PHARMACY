@@ -1,0 +1,16 @@
+# Fichiers à ne pas publier sur le site
+index_v1_backup.html
+index2.html
+index_small.html
+index_upload.html
+copy_media.ps1
+pha_site.zip
+*.pptx
+assets/
+
+# Contient les identifiants admin en clair — NE PAS publier
+UPLOAD_GUIDE.md
+
+# Divers
+Thumbs.db
+.DS_Store

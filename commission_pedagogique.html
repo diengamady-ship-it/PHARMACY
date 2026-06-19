@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PHA &mdash; Commission Pedagogique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0c0c;--bg2:#111;--cream:#e8e3db;--muted:#6e6860;--teal:#28C8D6;--serif:"Playfair Display",Georgia,serif;--sans:"DM Sans",system-ui,sans-serif;--ease:cubic-bezier(.19,1,.22,1)}
+*{margin:0;padding:0;box-sizing:border-box}
+html{background:var(--bg)}
+body{font-family:var(--sans);color:var(--cream);background:var(--bg);overflow-x:hidden;cursor:none}
+#cur{position:fixed;width:8px;height:8px;background:var(--teal);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .25s var(--ease),height .25s var(--ease);mix-blend-mode:difference}
+#cur.big{width:40px;height:40px;opacity:.45}
+nav{position:fixed;top:0;left:0;right:0;z-index:500;display:flex;align-items:center;justify-content:space-between;padding:0 4vw;height:60px;background:rgba(10,10,10,.9);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.05)}
+.nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--cream)}
+.nav-brand-img{width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.nav-brand-txt{font-family:var(--serif);font-weight:900;font-size:.95rem}
+.nav-comms{display:flex;gap:2px}
+.nav-comms a{font-size:.7rem;color:rgba(232,227,219,.35);padding:5px 11px;border-radius:100px;text-decoration:none;transition:color .2s,background .2s;white-space:nowrap}
+.nav-comms a:hover{color:var(--cream);background:rgba(255,255,255,.06)}
+.nav-comms a.cp{color:var(--teal)}
+.nav-back{font-size:.72rem;color:var(--muted);text-decoration:none;transition:color .2s;white-space:nowrap}
+.nav-back:hover{color:var(--cream)}
+#hero{position:relative;height:100svh;min-height:500px;display:flex;align-items:flex-end;overflow:hidden;padding-top:60px}
+.hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero-grad{position:absolute;inset:0;background:linear-gradient(150deg,rgba(0,0,0,.1),rgba(0,0,0,.82))}
+.hero-content{position:relative;z-index:2;padding:0 6vw 80px;max-width:860px}
+.hero-tag{display:block;font-size:.65rem;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);margin-bottom:14px;opacity:0;animation:up .7s var(--ease) .2s forwards}
+.hero-h1{font-family:var(--serif);font-size:clamp(3rem,8.5vw,7.5rem);font-weight:900;line-height:.92;letter-spacing:-.03em;color:var(--cream);opacity:0;animation:up .9s var(--ease) .32s forwards}
+.hero-h1 em{font-style:italic}
+.hero-sub{margin-top:20px;font-size:clamp(.82rem,1.3vw,.96rem);color:rgba(232,227,219,.5);font-weight:300;max-width:460px;line-height:1.75;opacity:0;animation:up .8s var(--ease) .48s forwards}
+.desc-sec{padding:80px 6vw;background:var(--bg2)}
+.sec-label{font-size:.65rem;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);margin-bottom:14px;display:block}
+.sec-title{font-family:var(--serif);font-size:clamp(1.8rem,4vw,3rem);font-weight:900;line-height:1.05;letter-spacing:-.02em;color:var(--cream);margin-bottom:18px}
+.sec-title em{font-style:italic}
+.sec-body{font-size:.9rem;color:rgba(232,227,219,.5);line-height:1.88;font-weight:300;max-width:640px;margin-bottom:48px}
+.acts{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:rgba(255,255,255,.05)}
+@media(max-width:580px){.acts{grid-template-columns:1fr}}
+.act{background:var(--bg2);padding:36px;transform:translateY(22px);opacity:0;transition:transform .8s var(--ease),opacity .6s ease}
+.act.vis{transform:none;opacity:1}
+.act:nth-child(2).vis{transition-delay:.07s}
+.act:nth-child(3).vis{transition-delay:.14s}
+.act:nth-child(4).vis{transition-delay:.21s}
+.act-date{font-size:.68rem;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;margin-bottom:9px}
+.act-name{font-family:var(--serif);font-size:1.1rem;font-weight:700;color:var(--cream);margin-bottom:7px}
+.act-desc{font-size:.8rem;color:var(--muted);line-height:1.7}
+.gal-sec{padding:64px 4vw 90px}
+.gal-h{font-family:var(--serif);font-size:clamp(1.5rem,3vw,2.4rem);font-weight:900;letter-spacing:-.02em;color:var(--cream);margin-bottom:28px;padding:0 1vw}
+.gal-h em{font-style:italic}
+.ggrid{columns:3;gap:10px}
+@media(max-width:780px){.ggrid{columns:2}}
+@media(max-width:460px){.ggrid{columns:1}}
+.gi{break-inside:avoid;margin-bottom:10px;position:relative;overflow:hidden;cursor:pointer;transform:translateY(22px);opacity:0;transition:transform .7s var(--ease),opacity .5s ease}
+.gi.vis{transform:none;opacity:1}
+.gi img{width:100%;display:block;transition:transform .55s var(--ease)}
+.gi:hover img{transform:scale(1.035)}
+.gov{position:absolute;bottom:0;left:0;right:0;padding:22px 12px 10px;background:linear-gradient(transparent,rgba(0,0,0,.78));opacity:0;transition:opacity .22s}
+.gi:hover .gov{opacity:1}
+.gov span{font-size:.72rem;color:rgba(232,227,219,.85)}
+.nav-btw{padding:48px 6vw;background:var(--bg2);border-top:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.nbtn{font-family:var(--serif);font-size:1rem;font-weight:700;color:rgba(232,227,219,.3);text-decoration:none;transition:color .25s}
+.nbtn:hover{color:var(--cream)}
+.nbtn.r{text-align:right}
+.nbtn span{display:block;font-family:var(--sans);font-size:.65rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+footer{padding:26px 5vw;border-top:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.flogo{font-family:var(--serif);font-weight:900;font-size:.9rem;color:var(--cream)}
+.fcopy{font-size:.68rem;color:var(--muted)}
+.ilb{display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.96);align-items:center;justify-content:center}
+.ilb.on{display:flex}
+.ilb img{max-width:92vw;max-height:90vh;object-fit:contain}
+.lbc{position:absolute;top:18px;right:22px;background:none;border:none;color:rgba(232,227,219,.35);font-size:1.2rem;cursor:pointer;transition:color .2s}
+.lbc:hover{color:var(--cream)}
+::-webkit-scrollbar{width:2px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:rgba(40,200,214,.3)}
+@keyframes up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div id="cur"></div>
+<nav>
+  <a href="index2.html" class="nav-brand">
+    <img class="nav-brand-img" src="media/logo.png" alt="PHA" onerror="this.style.display='none'">
+    <span class="nav-brand-txt">PHA</span>
+  </a>
+  <div class="nav-comms"><a href="commission_feminine.html" class="">Feminine</a><a href="commission_sociale.html" class="">Sociale</a><a href="commission_sport.html" class="">Sport</a><a href="commission_pedagogique.html" class="cp">Pedagogique</a><a href="commission_presse.html" class="">Presse</a><a href="commission_finances.html" class="">Finances</a></div>
+  <a href="index2.html" class="nav-back">Accueil</a>
+</nav>
+<section id="hero">
+  <img class="hero-img" src="media/pedagogique/epu2026_1.jpg" alt="">
+  <div class="hero-grad"></div>
+  <div class="hero-content">
+    <span class="hero-tag">Commission PHA</span>
+    <h1 class="hero-h1">Commission<br><em>Pedagogique</em></h1>
+    <p class="hero-sub">Excellence academique -- webinaires, EPU, revisions collectives et accompagnement personnalise pour chaque etudiant.</p>
+  </div>
+</section>
+<section class="desc-sec">
+  <span class="sec-label">Mission</span>
+  <h2 class="sec-title">Nos <em>Actions</em></h2>
+  <p class="sec-body">Webinaires avec le Dr Pape Matar Kandji sur l'Internat en Pharmacie via Google Meet, EPU 2026 sur les plantes medicinales avec le Pr Sylla Gueye, revisions collectives -- la formation au coeur de l'identite PHA.</p>
+  <div class="acts">
+<div class="act"><div class="act-date">23 Mai 2026</div><div class="act-name">Webinaire -- L'Internat en Pharmacie</div><div class="act-desc">Dr Pape Matar Kandji sur Google Meet. Preparer l'internat et comprendre les enjeux.</div></div>
+<div class="act"><div class="act-date">2026</div><div class="act-name">EPU -- Plantes Medicinales</div><div class="act-desc">Enseignement Post-Universitaire avec le Pr Sylla Gueye. Interactions medicamenteuses et phytotherapie.</div></div>
+<div class="act"><div class="act-date">Mensuel</div><div class="act-name">Revisions Collectives</div><div class="act-desc">Sessions de revision interactives, quiz pharmaceutiques et accompagnement par les pairs.</div></div>
+<div class="act"><div class="act-date">Annuel</div><div class="act-name">Conferences &amp; Partenariats</div><div class="act-desc">Partenariats avec des professeurs et praticiens pour enrichir la formation des membres PHA.</div></div>
+  </div>
+</section>
+<section class="gal-sec">
+  <h2 class="gal-h"><em>Photos</em></h2>
+  <div class="ggrid">
+    <div class="gi" onclick="oi(this)"><img src="media/pedagogique/epu2026_1.jpg" alt="" loading="lazy"><div class="gov"><span>EPU 2026 -- Plantes medicinales</span></div></div>
+    <div class="gi" onclick="oi(this)"><img src="media/pedagogique/epu2026_2.jpg" alt="" loading="lazy"><div class="gov"><span>EPU 2026 -- Pr Sylla Gueye</span></div></div>
+    <div class="gi" onclick="oi(this)"><img src="media/pedagogique/epu2026_3.jpg" alt="" loading="lazy"><div class="gov"><span>EPU 2026</span></div></div>
+    <div class="gi" onclick="oi(this)"><img src="media/pedagogique/epu2026_chronogramme.jpg" alt="" loading="lazy"><div class="gov"><span>Chronogramme EPU 2026</span></div></div>
+    <div class="gi" onclick="oi(this)"><img src="media/affiches/affiche_webinaire_internat.jpg" alt="" loading="lazy"><div class="gov"><span>Webinaire -- L'Internat en Pharmacie</span></div></div>
+    <div class="gi" onclick="oi(this)"><img src="media/pedagogique/affiche_webinaire.jpg" alt="" loading="lazy"><div class="gov"><span>Webinaire -- Formation continue</span></div></div>
+    <div class="gi" onclick="oi(this)"><img src="media/pedagogique/remise_kandji.jpg" alt="" loading="lazy"><div class="gov"><span>Remise -- Dr Pape Matar Kandji</span></div></div>
+    <div class="gi" onclick="oi(this)"><img src="media/evenements/remise_dr_kandji.jpg" alt="" loading="lazy"><div class="gov"><span>Dr Kandji -- Amphitheatre</span></div></div>
+    
+  </div>
+</section>
+<div class="nav-btw">
+  <a href="commission_sport.html" class="nbtn"><span>Precedente</span>Commission Sport &amp; Loisir</a>
+  <a href="index2.html" class="nbtn" style="color:rgba(232,227,219,.3)"><span>Accueil</span>PHA</a>
+  <a href="commission_presse.html" class="nbtn r"><span>Suivante</span>Commission Presse / Infos</a>
+</div>
+<footer>
+  <span class="flogo">PHA &mdash; Pharmaciens en Action</span>
+  <span class="fcopy">Universite Cheikh Anta Diop &middot; Dakar</span>
+</footer>
+<div class="ilb" id="ilb">
+  <button class="lbc" onclick="document.getElementById('ilb').classList.remove('on')">X</button>
+  <img id="ilbi" src="" alt="">
+</div>
+<script>
+const cur=document.getElementById("cur");
+document.addEventListener("mousemove",e=>{cur.style.left=e.clientX+"px";cur.style.top=e.clientY+"px"});
+document.querySelectorAll("a,button,.gi").forEach(el=>{
+  el.addEventListener("mouseenter",()=>cur.classList.add("big"));
+  el.addEventListener("mouseleave",()=>cur.classList.remove("big"));
+});
+function reveal(){
+  const vH=window.innerHeight;
+  document.querySelectorAll(".act,.gi").forEach((el,i)=>{
+    if(el.getBoundingClientRect().top<vH*.9)
+      setTimeout(()=>el.classList.add("vis"),el.classList.contains("gi")?i%6*40:0);
+  });
+}
+window.addEventListener("scroll",reveal,{passive:true});
+reveal();
+function oi(el){const img=el.querySelector("img");if(img){document.getElementById("ilbi").src=img.src;document.getElementById("ilb").classList.add("on");}}
+document.getElementById("ilb").addEventListener("click",e=>{if(e.target===e.currentTarget)e.target.classList.remove("on");});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")document.getElementById("ilb").classList.remove("on");});
+</script>
+</body>
+</html>

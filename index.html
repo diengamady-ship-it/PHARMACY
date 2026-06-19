@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHA — Pharmaciens en Action</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0c0c;
+  --bg2:#111111;
+  --cream:#e8e3db;
+  --muted:#6e6860;
+  --teal:#28C8D6;
+  --serif:'Playfair Display',Georgia,serif;
+  --sans:'DM Sans',system-ui,sans-serif;
+  --ease:cubic-bezier(.19,1,.22,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{background:var(--bg)}
+body{font-family:var(--sans);color:var(--cream);background:var(--bg);overflow-x:hidden;cursor:none}
+
+/* CURSOR */
+#cur{position:fixed;width:8px;height:8px;background:var(--teal);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .25s var(--ease),height .25s var(--ease);mix-blend-mode:difference}
+#cur.big{width:44px;height:44px;opacity:.5}
+
+/* NAV */
+nav{
+  position:fixed;top:18px;left:50%;transform:translateX(-50%);
+  z-index:500;display:flex;align-items:center;
+  background:rgba(10,10,10,.6);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid rgba(255,255,255,.07);border-radius:100px;
+  padding:9px 9px 9px 24px;
+  transition:background .4s;
+  gap:20px;
+}
+.nav-logo{
+  font-family:var(--serif);font-weight:900;font-size:1.05rem;
+  color:var(--cream);text-decoration:none;letter-spacing:-.01em;white-space:nowrap;
+}
+.nav-links{display:flex;gap:2px;align-items:center}
+.nav-links a{
+  color:rgba(232,227,219,.5);font-size:.78rem;font-weight:400;
+  padding:7px 15px;border-radius:100px;text-decoration:none;
+  transition:color .25s,background .25s;white-space:nowrap;
+}
+.nav-links a:hover{color:var(--cream);background:rgba(255,255,255,.05)}
+.nav-cta{
+  background:var(--cream);color:#0c0c0c;font-size:.78rem;font-weight:500;
+  padding:9px 20px;border-radius:100px;text-decoration:none;
+  transition:opacity .25s;white-space:nowrap;
+}
+.nav-cta:hover{opacity:.85}
+
+/* HERO */
+#hero{position:relative;height:100svh;min-height:560px;display:flex;align-items:flex-end;overflow:hidden}
+.hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero-grad{position:absolute;inset:0;background:linear-gradient(160deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,.75) 100%)}
+.hero-content{position:relative;z-index:2;padding:0 6vw 64px;max-width:1000px}
+.hero-title{
+  font-family:var(--serif);font-size:clamp(3.8rem,9.5vw,8.5rem);
+  font-weight:900;line-height:.95;letter-spacing:-.03em;color:var(--cream);
+  opacity:0;animation:up .9s var(--ease) .3s forwards;
+}
+.hero-title em{font-style:italic;color:var(--teal)}
+.hero-sub{
+  margin-top:20px;font-size:clamp(.85rem,1.4vw,1rem);
+  color:rgba(232,227,219,.6);font-weight:300;max-width:440px;line-height:1.7;
+  opacity:0;animation:up .8s var(--ease) .55s forwards;
+}
+.hero-bottom{
+  position:absolute;bottom:28px;right:5vw;z-index:2;
+  display:flex;align-items:center;gap:10px;
+  opacity:0;animation:fadeI 1s ease .9s forwards;
+}
+.hero-line{width:40px;height:1px;background:rgba(232,227,219,.3)}
+.hero-scrolltxt{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(232,227,219,.4)}
+
+/* STATEMENT — sticky zoom */
+#statement{height:220vh}
+.st-sticky{position:sticky;top:0;height:100svh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.st-inner{
+  text-align:center;padding:0 8vw;max-width:900px;
+  transform:scale(.76);opacity:0;will-change:transform,opacity;
+}
+.st-title{
+  font-family:var(--serif);font-size:clamp(2.8rem,7vw,6.5rem);
+  font-weight:900;line-height:1;letter-spacing:-.03em;color:var(--cream);
+}
+.st-title em{font-style:italic;color:transparent;-webkit-text-stroke:1.5px var(--cream)}
+.st-sub{
+  margin-top:32px;font-size:clamp(.88rem,1.4vw,1rem);
+  color:rgba(232,227,219,.45);max-width:480px;margin-left:auto;margin-right:auto;
+  line-height:1.75;font-weight:300;
+}
+
+/* COMMISSIONS — alternating */
+#commissions .csec{display:grid;grid-template-columns:1fr 1fr;min-height:92vh}
+#commissions .csec.rev{direction:rtl}
+#commissions .csec.rev>*{direction:ltr}
+.cimg{position:relative;overflow:hidden}
+.cimg img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  transform:scale(1.06);transition:transform 10s ease;
+  will-change:transform;
+}
+.csec:hover .cimg img{transform:scale(1)}
+.cimg-shade{position:absolute;inset:0;background:rgba(0,0,0,.18)}
+.ctxt{
+  background:var(--bg2);display:flex;flex-direction:column;
+  justify-content:center;padding:72px 7vw;
+  transform:translateY(36px);opacity:0;
+  transition:transform 1s var(--ease),opacity .8s ease;
+}
+.ctxt.vis{transform:translateY(0);opacity:1}
+.ctxt-label{
+  font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--teal);margin-bottom:18px;display:block;
+}
+.ctxt-title{
+  font-family:var(--serif);font-size:clamp(1.7rem,2.8vw,2.6rem);
+  font-weight:700;line-height:1.05;color:var(--cream);margin-bottom:16px;
+}
+.ctxt-body{font-size:.9rem;color:rgba(232,227,219,.55);line-height:1.85;font-weight:300;max-width:400px}
+.ctxt-stat{
+  margin-top:40px;padding-top:32px;
+  border-top:1px solid rgba(255,255,255,.06);
+  display:flex;gap:40px;
+}
+.ctxt-stat-item .n{
+  font-family:var(--serif);font-size:2.4rem;font-weight:900;
+  color:var(--cream);line-height:1;
+}
+.ctxt-stat-item .l{font-size:.72rem;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.08em}
+
+/* GALLERY */
+#gallery{padding:100px 4vw 80px}
+.gal-title{
+  font-family:var(--serif);font-size:clamp(1.8rem,4vw,3rem);
+  font-weight:900;letter-spacing:-.02em;color:var(--cream);
+  margin-bottom:40px;padding:0 2vw;
+}
+.gal-title em{font-style:italic}
+.gtabs{display:flex;gap:6px;flex-wrap:wrap;padding:0 2vw;margin-bottom:32px}
+.gtab{
+  background:transparent;border:1px solid rgba(255,255,255,.1);
+  color:var(--muted);font-family:var(--sans);font-size:.75rem;letter-spacing:.04em;
+  padding:7px 18px;border-radius:100px;cursor:pointer;transition:all .25s;
+}
+.gtab:hover{color:var(--cream);border-color:rgba(255,255,255,.25)}
+.gtab.on{background:var(--cream);border-color:var(--cream);color:#0c0c0c}
+.ggrid{columns:3;gap:12px}
+@media(max-width:800px){.ggrid{columns:2}}
+@media(max-width:480px){.ggrid{columns:1}}
+.gi{
+  break-inside:avoid;margin-bottom:12px;
+  position:relative;overflow:hidden;cursor:pointer;
+  transform:translateY(28px);opacity:0;
+  transition:transform .7s var(--ease),opacity .5s ease;
+}
+.gi.vis{transform:translateY(0);opacity:1}
+.gi img{width:100%;display:block;transition:transform .6s var(--ease)}
+.gi:hover img{transform:scale(1.03)}
+.gov{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:28px 14px 12px;
+  background:linear-gradient(transparent,rgba(0,0,0,.8));
+  opacity:0;transition:opacity .25s;
+}
+.gi:hover .gov{opacity:1}
+.gov span{font-size:.75rem;color:rgba(232,227,219,.85)}
+
+/* VIDEOS */
+#videos{padding:80px 5vw 100px;background:var(--bg2)}
+.vid-title{
+  font-family:var(--serif);font-size:clamp(1.8rem,4vw,3rem);
+  font-weight:900;letter-spacing:-.02em;color:var(--cream);
+  margin-bottom:48px;
+}
+.vid-title em{font-style:italic}
+.vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:860px){.vgrid{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.vgrid{grid-template-columns:1fr}}
+.vcard{
+  cursor:pointer;overflow:hidden;border-radius:8px;
+  background:#0a0a0a;
+  transform:translateY(30px);opacity:0;
+  transition:transform .8s var(--ease),opacity .6s ease;
+  position:relative;
+}
+.vcard:nth-child(2){transition-delay:.08s}
+.vcard:nth-child(3){transition-delay:.16s}
+.vcard:nth-child(4){transition-delay:.08s}
+.vcard:nth-child(5){transition-delay:.16s}
+.vcard.vis{transform:translateY(0);opacity:1}
+.vcard.featured{grid-column:span 2}
+@media(max-width:860px){.vcard.featured{grid-column:span 1}}
+.vthumb{position:relative;padding-top:56.25%;overflow:hidden}
+.vthumb video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vplay{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.35);transition:background .25s;
+}
+.vcard:hover .vplay{background:rgba(0,0,0,.15)}
+.vplay-circle{
+  width:52px;height:52px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.5);
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .25s,transform .3s var(--ease);
+  backdrop-filter:blur(6px);
+}
+.vplay-circle svg{width:16px;height:16px;fill:white;margin-left:3px}
+.vcard:hover .vplay-circle{border-color:rgba(255,255,255,.9);transform:scale(1.1)}
+.vinfo{padding:16px 18px}
+.vname{font-size:.88rem;font-weight:500;color:var(--cream);margin-bottom:4px}
+.vsub{font-size:.75rem;color:var(--muted)}
+
+/* IMPACT — just numbers */
+#impact{padding:120px 6vw;border-top:1px solid rgba(255,255,255,.05)}
+.impact-nums{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+@media(max-width:860px){.impact-nums{grid-template-columns:1fr 1fr}}
+.istat{
+  padding:40px 0;border-right:1px solid rgba(255,255,255,.05);
+  transform:translateY(24px);opacity:0;transition:transform .8s var(--ease),opacity .6s ease;
+}
+.istat:first-child{padding-left:0}
+.istat:last-child{border-right:none}
+.istat.vis{transform:translateY(0);opacity:1}
+.istat:nth-child(2).vis{transition-delay:.07s}
+.istat:nth-child(3).vis{transition-delay:.14s}
+.istat:nth-child(4).vis{transition-delay:.21s}
+.in{
+  font-family:var(--serif);font-size:clamp(3rem,6vw,5rem);
+  font-weight:900;color:var(--cream);line-height:1;
+}
+.il{margin-top:14px;font-size:.78rem;color:var(--muted);line-height:1.5;max-width:160px}
+
+/* CONTACT */
+#contact{padding:120px 6vw;background:var(--bg2);border-top:1px solid rgba(255,255,255,.05)}
+.contact-wrap{display:grid;grid-template-columns:1fr 1fr;gap:100px;align-items:start}
+@media(max-width:680px){.contact-wrap{grid-template-columns:1fr;gap:60px}}
+.contact-hed{
+  font-family:var(--serif);font-size:clamp(2.2rem,5vw,4rem);
+  font-weight:900;line-height:1;letter-spacing:-.03em;color:var(--cream);
+  margin-bottom:40px;
+}
+.contact-hed em{font-style:italic}
+.clinks{display:flex;flex-direction:column;gap:0}
+.clink{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 0;border-bottom:1px solid rgba(255,255,255,.06);
+  color:rgba(232,227,219,.55);text-decoration:none;font-size:.88rem;
+  transition:color .25s;
+}
+.clink:hover{color:var(--cream)}
+.clink-left{display:flex;align-items:center;gap:14px}
+.clink-icon{width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;transition:border-color .25s}
+.clink:hover .clink-icon{border-color:var(--teal);color:var(--teal)}
+.clink-arr{font-size:.75rem;opacity:.35;transition:opacity .25s,transform .25s}
+.clink:hover .clink-arr{opacity:1;transform:translate(2px,-2px)}
+.cform{display:flex;flex-direction:column;gap:12px}
+.cinput{
+  background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.12);
+  color:var(--cream);font-family:var(--sans);font-size:.88rem;
+  padding:14px 0;outline:none;transition:border-color .25s;
+}
+.cinput:focus{border-color:var(--cream)}
+.cinput::placeholder{color:var(--muted)}
+textarea.cinput{resize:none;min-height:100px}
+.csend{
+  margin-top:8px;background:var(--cream);color:#0c0c0c;
+  font-family:var(--sans);font-weight:500;font-size:.85rem;
+  padding:14px 32px;border:none;border-radius:100px;
+  cursor:pointer;align-self:flex-start;
+  transition:opacity .25s;
+}
+.csend:hover{opacity:.82}
+
+/* FOOTER */
+footer{
+  padding:32px 6vw;border-top:1px solid rgba(255,255,255,.05);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;
+}
+.flogo{font-family:var(--serif);font-weight:900;font-size:1.1rem;color:var(--cream)}
+.fcopy{font-size:.72rem;color:var(--muted)}
+.flinks{display:flex;gap:20px}
+.flinks a{font-size:.72rem;color:var(--muted);text-decoration:none;transition:color .2s}
+.flinks a:hover{color:var(--cream)}
+
+/* LIGHTBOXES */
+.vlb,.ilb{display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.96);align-items:center;justify-content:center}
+.vlb.on,.ilb.on{display:flex}
+.lb-close{position:absolute;top:22px;right:28px;background:none;border:none;color:rgba(232,227,219,.4);font-size:1.3rem;cursor:pointer;transition:color .2s;line-height:1}
+.lb-close:hover{color:var(--cream)}
+.vlb-inner{width:90vw;max-width:1100px}
+.vlb-inner video{width:100%;border-radius:6px;display:block}
+.ilb img{max-width:90vw;max-height:88vh;object-fit:contain;border-radius:4px}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:2px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:rgba(40,200,214,.4)}
+
+/* ANIMATIONS */
+@keyframes up{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeI{from{opacity:0}to{opacity:1}}
+
+/* HAMBURGER */
+.nav-burger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;background:none;border:none}
+.nav-burger span{display:block;width:22px;height:1.5px;background:var(--cream);transition:transform .3s,opacity .3s}
+.nav-overlay{display:none;position:fixed;inset:0;z-index:490;background:rgba(0,0,0,.97);flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.nav-overlay.on{display:flex}
+.nav-overlay a{font-family:var(--serif);font-size:clamp(1.6rem,5vw,2.8rem);font-weight:900;color:rgba(232,227,219,.4);text-decoration:none;letter-spacing:-.02em;transition:color .25s,transform .25s;transform:translateY(10px);opacity:0}
+.nav-overlay.on a{opacity:1;transform:none;transition:color .25s,opacity .5s ease,transform .5s var(--ease)}
+.nav-overlay.on a:nth-child(1){transition-delay:.08s}
+.nav-overlay.on a:nth-child(2){transition-delay:.14s}
+.nav-overlay.on a:nth-child(3){transition-delay:.20s}
+.nav-overlay.on a:nth-child(4){transition-delay:.26s}
+.nav-overlay.on a:nth-child(5){transition-delay:.32s}
+.nav-overlay.on a:nth-child(6){transition-delay:.38s}
+.nav-overlay.on a:nth-child(7){transition-delay:.44s}
+.nav-overlay a:hover{color:var(--teal)}
+.nav-overlay-close{position:absolute;top:22px;right:26px;background:none;border:none;color:rgba(232,227,219,.3);font-size:1.5rem;cursor:pointer}
+/* MOBILE */
+@media(max-width:760px){
+  nav{top:10px;padding:8px 8px 8px 18px;gap:10px}
+  #commissions .csec{grid-template-columns:1fr}
+  .cimg{height:56vw}
+  .nav-links .hd{display:none}
+  .nav-burger{display:flex}
+  .impact-nums{gap:0;grid-template-columns:1fr 1fr}
+  .istat{border-right:none;border-bottom:1px solid rgba(255,255,255,.05)}
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+
+<nav id="mainnav">
+  <a href="#hero" class="nav-logo" style="display:flex;align-items:center;gap:8px">
+    <img src="media/logo.svg" alt="PHA" width="36" height="36" style="border-radius:50%;object-fit:cover">
+    PHA
+  </a>
+  <div class="nav-links">
+    <a href="commission_feminine.html" class="hd">Féminine</a>
+    <a href="commission_sociale.html" class="hd">Sociale</a>
+    <a href="commission_sport.html" class="hd">Sport</a>
+    <a href="commission_pedagogique.html" class="hd">Pédago</a>
+    <a href="commission_presse.html" class="hd">Presse</a>
+    <a href="commission_finances.html" class="hd">Finances</a>
+    <a href="#contact" class="nav-cta">Rejoindre</a>
+  </div>
+  <button class="nav-burger" id="navBurger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="nav-overlay" id="navOverlay">
+  <button class="nav-overlay-close" id="navClose">&#x2715;</button>
+  <a href="commission_feminine.html">Féminine</a>
+  <a href="commission_sociale.html">Sociale</a>
+  <a href="commission_sport.html">Sport</a>
+  <a href="commission_pedagogique.html">Pédagogique</a>
+  <a href="commission_presse.html">Presse / Infos</a>
+  <a href="commission_finances.html">Finances</a>
+  <a href="#contact" onclick="document.getElementById('navOverlay').classList.remove('on')">Rejoindre</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <video class="hero-video" autoplay muted loop playsinline preload="metadata">
+    <source src="media/videos/video_pha_2.mp4" type="video/mp4">
+    <source src="media/videos/video_pha_1.mp4" type="video/mp4">
+  </video>
+  <div class="hero-grad"></div>
+  <div class="hero-content">
+    <h1 class="hero-title">Pharmaciens<br>en <em>Action</em></h1>
+    <p class="hero-sub">PHA — association étudiante de la Faculté de Pharmacie, Université Cheikh Anta Diop, Dakar.</p>
+  </div>
+  <div class="hero-bottom">
+    <div class="hero-line"></div>
+    <span class="hero-scrolltxt">Scroll</span>
+  </div>
+</section>
+
+<!-- STATEMENT -->
+<section id="statement">
+  <div class="st-sticky">
+    <div class="st-inner" id="stInner">
+      <h2 class="st-title">Former.<br><em>Soigner.</em><br>Servir.</h2>
+      <p class="st-sub">Depuis notre création, PHA porte une vision : faire de chaque étudiant en pharmacie un acteur du changement — sur le terrain, dans les amphis, et au sein des communautés.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COMMISSIONS -->
+<div id="commissions">
+
+  <div class="csec">
+    <div class="cimg"><img src="media/affiches/affiche_ist_1.jpg" alt="" loading="lazy"><div class="cimg-shade"></div></div>
+    <div class="ctxt">
+      <span class="ctxt-label">Commission</span>
+      <h3 class="ctxt-title">Féminine</h3>
+      <p class="ctxt-body">Le bouclier de la santé féminine. De la prévention du cancer du sein aux campagnes IST, en passant par la sensibilisation à l'hygiène intime — chaque action est menée avec rigueur et compassion.</p>
+      <div class="ctxt-stat">
+        <div class="ctxt-stat-item"><div class="n">100%</div><div class="l">Réalisation</div></div>
+        <div class="ctxt-stat-item"><div class="n">5</div><div class="l">Campagnes</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="csec rev">
+    <div class="cimg"><img src="media/evenements/action_sociale_daara.jpg" alt="" loading="lazy"><div class="cimg-shade"></div></div>
+    <div class="ctxt">
+      <span class="ctxt-label">Commission</span>
+      <h3 class="ctxt-title">Sociale</h3>
+      <p class="ctxt-body">Solidarité de terrain. Ndogou à l'Hôpital Abass Ndao, pulls et déparasitage au Daara Markazoul Houloum, dons alimentaires pendant le Ramadan pour 30 familles.</p>
+      <div class="ctxt-stat">
+        <div class="ctxt-stat-item"><div class="n">350</div><div class="l">Bénéficiaires</div></div>
+        <div class="ctxt-stat-item"><div class="n">160</div><div class="l">Enfants</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="csec">
+    <div class="cimg"><img src="media/affiches/affiche_fitness_hta.jpg" alt="" loading="lazy"><div class="cimg-shade"></div></div>
+    <div class="ctxt">
+      <span class="ctxt-label">Commission</span>
+      <h3 class="ctxt-title">Sport & Loisir</h3>
+      <p class="ctxt-body">La Pharma Cup en partenariat avec l'AEP Sénégal, et le Fitness Day contre l'HTA à Place Omar Pène UCAD le 17 mai 2026 — sport comme vecteur de santé publique.</p>
+      <div class="ctxt-stat">
+        <div class="ctxt-stat-item"><div class="n">17/05</div><div class="l">Fitness HTA 2026</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="csec rev">
+    <div class="cimg"><img src="media/pedagogique/epu2026_1.jpg" alt="" loading="lazy"><div class="cimg-shade"></div></div>
+    <div class="ctxt">
+      <span class="ctxt-label">Commission</span>
+      <h3 class="ctxt-title">Pédagogique</h3>
+      <p class="ctxt-body">Webinaires avec le Dr Pape Matar Kandji sur l'Internat en Pharmacie, EPU 2026 sur les plantes médicinales avec le Pr Sylla Gueye — la formation au cœur de l'identité PHA.</p>
+      <div class="ctxt-stat">
+        <div class="ctxt-stat-item"><div class="n">3+</div><div class="l">Webinaires</div></div>
+        <div class="ctxt-stat-item"><div class="n">EPU</div><div class="l">2026</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="csec">
+    <div class="cimg"><img src="media/affiches/affiche_antibiotique.jpg" alt="" loading="lazy"><div class="cimg-shade"></div></div>
+    <div class="ctxt">
+      <span class="ctxt-label">Commission</span>
+      <h3 class="ctxt-title">Presse / Infos</h3>
+      <p class="ctxt-body">La voix de PHA — affiches pour la Journée mondiale de l'Antibiotique, Octobre Rose, Novembre Bleu, Diabète et IST. Dix campagnes visuelles qui touchent au cœur.</p>
+      <div class="ctxt-stat">
+        <div class="ctxt-stat-item"><div class="n">10+</div><div class="l">Affiches</div></div>
+        <div class="ctxt-stat-item"><div class="n">5</div><div class="l">Campagnes</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="csec rev">
+    <div class="cimg"><img src="media/membres/membres_filles_1.jpg" alt="" loading="lazy"><div class="cimg-shade"></div></div>
+    <div class="ctxt">
+      <span class="ctxt-label">Commission</span>
+      <h3 class="ctxt-title">Finances</h3>
+      <p class="ctxt-body">Blouses, tenues de bloc, lacostes et totbags PHA — la Commission Finances assure l'autonomie matérielle et la pérennité de toutes nos actions.</p>
+      <div class="ctxt-stat">
+        <div class="ctxt-stat-item"><div class="n">4</div><div class="l">Produits</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- GALLERY -->
+<section id="gallery" style="padding:90px 4vw 80px">
+  <h2 class="gal-title"><em>Galerie</em></h2>
+  <div class="gtabs">
+    <button class="gtab on" onclick="fg('all',this)">Tout</button>
+    <button class="gtab" onclick="fg('mb',this)">Membres</button>
+    <button class="gtab" onclick="fg('ev',this)">Événements</button>
+    <button class="gtab" onclick="fg('f',this)">Féminine</button>
+    <button class="gtab" onclick="fg('s',this)">Sociale</button>
+    <button class="gtab" onclick="fg('p',this)">Pédagogique</button>
+    <button class="gtab" onclick="fg('pr',this)">Presse</button>
+  </div>
+  <div class="ggrid" id="ggrid">
+    <div class="gi" data-c="mb" onclick="oi(this)"><img src="media/membres/membres_filles_1.jpg" alt="" loading="lazy"><div class="gov"><span>Équipe PHA</span></div></div>
+    <div class="gi" data-c="ev" onclick="oi(this)"><img src="media/evenements/remise_groupe.jpg" alt="" loading="lazy"><div class="gov"><span>Remise de posters</span></div></div>
+    <div class="gi" data-c="pr" onclick="oi(this)"><img src="media/affiches/affiche_antibiotique.jpg" alt="" loading="lazy"><div class="gov"><span>Journée Antibiotique</span></div></div>
+    <div class="gi" data-c="ev" onclick="oi(this)"><img src="media/evenements/pr_assa_lam_faye.jpg" alt="" loading="lazy"><div class="gov"><span>Pr Assa Lam Faye</span></div></div>
+    <div class="gi" data-c="mb" onclick="oi(this)"><img src="media/membres/membres_conference.jpg" alt="" loading="lazy"><div class="gov"><span>PHA sur RTS</span></div></div>
+    <div class="gi" data-c="f" onclick="oi(this)"><img src="media/affiches/affiche_ist_1.jpg" alt="" loading="lazy"><div class="gov"><span>Sensibilisation IST</span></div></div>
+    <div class="gi" data-c="s" onclick="oi(this)"><img src="media/evenements/action_sociale_daara.jpg" alt="" loading="lazy"><div class="gov"><span>Daara Markazoul Houloum</span></div></div>
+    <div class="gi" data-c="ev" onclick="oi(this)"><img src="media/evenements/remise_dr_kandji.jpg" alt="" loading="lazy"><div class="gov"><span>Dr Pape Matar Kandji</span></div></div>
+    <div class="gi" data-c="f" onclick="oi(this)"><img src="media/affiches/affiche_cancer_causes.jpg" alt="" loading="lazy"><div class="gov"><span>Cancer du sein</span></div></div>
+    <div class="gi" data-c="p" onclick="oi(this)"><img src="media/pedagogique/epu2026_2.jpg" alt="" loading="lazy"><div class="gov"><span>EPU 2026</span></div></div>
+    <div class="gi" data-c="mb" onclick="oi(this)"><img src="media/membres/membres_filles_2.jpg" alt="" loading="lazy"><div class="gov"><span>Membres PHA</span></div></div>
+    <div class="gi" data-c="ev" onclick="oi(this)"><img src="media/evenements/remise_pr_omar_sarr_1.jpg" alt="" loading="lazy"><div class="gov"><span>Pr Serigne Omar Sarr</span></div></div>
+    <div class="gi" data-c="pr" onclick="oi(this)"><img src="media/affiches/affiche_cancer_1.jpg" alt="" loading="lazy"><div class="gov"><span>Octobre Rose</span></div></div>
+    <div class="gi" data-c="s" onclick="oi(this)"><img src="media/evenements/action_sociale_rue.jpg" alt="" loading="lazy"><div class="gov"><span>Distribution communautaire</span></div></div>
+    <div class="gi" data-c="p" onclick="oi(this)"><img src="media/affiches/affiche_webinaire_internat.jpg" alt="" loading="lazy"><div class="gov"><span>Webinaire Internat</span></div></div>
+    <div class="gi" data-c="ev" onclick="oi(this)"><img src="media/evenements/remise_arp_senegal_1.jpg" alt="" loading="lazy"><div class="gov"><span>ARP-Sénégal</span></div></div>
+    <div class="gi" data-c="f" onclick="oi(this)"><img src="media/affiches/affiche_hygiene_intime.jpg" alt="" loading="lazy"><div class="gov"><span>Hygiène intime</span></div></div>
+    <div class="gi" data-c="mb" onclick="oi(this)"><img src="media/membres/membres_m_thiam.jpg" alt="" loading="lazy"><div class="gov"><span>M. Thiam — PHA</span></div></div>
+  </div>
+</section>
+
+<!-- VIDEOS -->
+<section id="videos" style="padding:80px 5vw 100px;background:var(--bg2)">
+  <h2 class="vid-title"><em>Vidéos</em></h2>
+  <div class="vgrid">
+    <div class="vcard featured" onclick="pv('media/videos/video_pha_1.mp4')">
+      <div class="vthumb"><video muted preload="metadata" src="media/videos/video_pha_1.mp4"></video>
+        <div class="vplay"><div class="vplay-circle"><svg viewBox="0 0 16 16"><polygon points="3,2 14,8 3,14"/></svg></div></div>
+      </div>
+      <div class="vinfo"><div class="vname">PHA en action</div><div class="vsub">Activités et événements</div></div>
+    </div>
+    <div class="vcard" onclick="pv('media/videos/video_pha_2.mp4')">
+      <div class="vthumb"><video muted preload="metadata" src="media/videos/video_pha_2.mp4"></video>
+        <div class="vplay"><div class="vplay-circle"><svg viewBox="0 0 16 16"><polygon points="3,2 14,8 3,14"/></svg></div></div>
+      </div>
+      <div class="vinfo"><div class="vname">Moments forts</div><div class="vsub">Reportage PHA</div></div>
+    </div>
+    <div class="vcard" onclick="pv('media/videos/video_pha_3.mp4')">
+      <div class="vthumb"><video muted preload="metadata" src="media/videos/video_pha_3.mp4"></video>
+        <div class="vplay"><div class="vplay-circle"><svg viewBox="0 0 16 16"><polygon points="3,2 14,8 3,14"/></svg></div></div>
+      </div>
+      <div class="vinfo"><div class="vname">Sur le terrain</div><div class="vsub">Actions sociales</div></div>
+    </div>
+    <div class="vcard" onclick="pv('media/videos/video_pha_4.mp4')">
+      <div class="vthumb"><video muted preload="metadata" src="media/videos/video_pha_4.mp4"></video>
+        <div class="vplay"><div class="vplay-circle"><svg viewBox="0 0 16 16"><polygon points="3,2 14,8 3,14"/></svg></div></div>
+      </div>
+      <div class="vinfo"><div class="vname">La vie de PHA</div><div class="vsub">Webinaires & activités</div></div>
+    </div>
+    <div class="vcard" onclick="pv('media/videos/video_pha_5.mp4')">
+      <div class="vthumb"><video muted preload="metadata" src="media/videos/video_pha_5.mp4"></video>
+        <div class="vplay"><div class="vplay-circle"><svg viewBox="0 0 16 16"><polygon points="3,2 14,8 3,14"/></svg></div></div>
+      </div>
+      <div class="vinfo"><div class="vname">Highlights 2024–25</div><div class="vsub">Meilleurs moments</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- IMPACT -->
+<section id="impact">
+  <div class="impact-nums">
+    <div class="istat" style="padding-right:40px">
+      <div class="in"><span class="cnt" data-t="350">0</span>+</div>
+      <div class="il">Bénéficiaires de nos actions sociales</div>
+    </div>
+    <div class="istat" style="padding:40px">
+      <div class="in"><span class="cnt" data-t="6">0</span></div>
+      <div class="il">Commissions actives</div>
+    </div>
+    <div class="istat" style="padding:40px">
+      <div class="in"><span class="cnt" data-t="10">0</span>+</div>
+      <div class="il">Affiches de sensibilisation</div>
+    </div>
+    <div class="istat" style="padding:40px 0 40px 40px">
+      <div class="in"><span class="cnt" data-t="160">0</span></div>
+      <div class="il">Enfants déparasités au Daara</div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-wrap">
+    <div>
+      <h2 class="contact-hed">Tu es étudiant<br>en pharmacie ?<br><em>PHA t'attend.</em></h2>
+      <div class="clinks">
+        <a href="https://www.instagram.com/pha_officiel" target="_blank" class="clink">
+          <span class="clink-left"><span class="clink-icon">IG</span> Instagram PHA</span>
+          <span class="clink-arr">↗</span>
+        </a>
+        <a href="https://wa.me/221000000000" target="_blank" class="clink">
+          <span class="clink-left"><span class="clink-icon">WA</span> WhatsApp</span>
+          <span class="clink-arr">↗</span>
+        </a>
+        <a href="mailto:pha.officiel@gmail.com" class="clink">
+          <span class="clink-left"><span class="clink-icon">@</span> Email</span>
+          <span class="clink-arr">↗</span>
+        </a>
+        <a href="index.html" class="clink">
+          <span class="clink-left"><span class="clink-icon">v1</span> Site PHA v1</span>
+          <span class="clink-arr">↗</span>
+        </a>
+      </div>
+    </div>
+    <div class="cform">
+      <input type="text" class="cinput" placeholder="Prénom & Nom">
+      <input type="email" class="cinput" placeholder="Email">
+      <input type="text" class="cinput" placeholder="Niveau (ex : Pharma 3)">
+      <textarea class="cinput" placeholder="Pourquoi rejoindre PHA ?"></textarea>
+      <button class="csend" onclick="this.textContent='Envoyé ✓';this.style.opacity='.5';this.disabled=true">Envoyer →</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="flogo">PHA</span>
+  <span class="fcopy">© 2025 Pharmaciens en Action — UCAD Dakar</span>
+  <div class="flinks">
+    <a href="index.html">v1</a>
+    <a href="admin.html">Admin</a>
+    <a href="https://diengamady-ship-it.github.io/PHARMACY/" target="_blank">GitHub</a>
+  </div>
+</footer>
+
+<!-- VIDEO LB -->
+<div class="vlb" id="vlb">
+  <button class="lb-close" onclick="cv()">✕</button>
+  <div class="vlb-inner"><video id="vlbv" controls playsinline></video></div>
+</div>
+
+<!-- IMG LB -->
+<div class="ilb" id="ilb" onclick="this.classList.remove('on')">
+  <button class="lb-close" onclick="document.getElementById('ilb').classList.remove('on')">✕</button>
+  <img id="ilbi" src="" alt="">
+</div>
+
+<script>
+/* CURSOR */
+const cur=document.getElementById('cur');
+document.addEventListener('mousemove',e=>{cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px'});
+document.querySelectorAll('a,button,.vcard,.gi').forEach(el=>{
+  el.addEventListener('mouseenter',()=>cur.classList.add('big'));
+  el.addEventListener('mouseleave',()=>cur.classList.remove('big'));
+});
+
+/* HAMBURGER MENU */
+const navBurger=document.getElementById('navBurger');
+const navOverlay=document.getElementById('navOverlay');
+const navClose=document.getElementById('navClose');
+function openMenu(){navOverlay.classList.add('on');document.body.style.overflow='hidden';}
+function closeMenu(){navOverlay.classList.remove('on');document.body.style.overflow='';}
+navBurger.addEventListener('click',openMenu);
+navClose.addEventListener('click',closeMenu);
+navOverlay.addEventListener('click',e=>{if(e.target===navOverlay)closeMenu();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
+
+/* NAV opacity on scroll */
+const nav=document.getElementById('mainnav');
+window.addEventListener('scroll',()=>{
+  nav.style.background=window.scrollY>50?'rgba(10,10,10,.88)':'rgba(10,10,10,.6)';
+},{passive:true});
+
+/* SMOOTH anchor scroll */
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    const t=document.querySelector(a.getAttribute('href'));
+    if(t){e.preventDefault();window.scrollTo({top:t.offsetTop-70,behavior:'smooth'});}
+  });
+});
+
+/* STATEMENT sticky zoom */
+const stSec=document.getElementById('statement');
+const stIn=document.getElementById('stInner');
+function stZoom(){
+  const r=stSec.getBoundingClientRect();
+  const total=stSec.offsetHeight-window.innerHeight;
+  const p=Math.max(0,Math.min(1,-r.top/total));
+  stIn.style.transform=`scale(${.76+p*.24})`;
+  stIn.style.opacity=.1+p*.9;
+}
+
+/* REVEAL on scroll */
+function reveal(){
+  const vH=window.innerHeight;
+  document.querySelectorAll('.ctxt,.gi,.vcard,.istat').forEach((el,i)=>{
+    const r=el.getBoundingClientRect();
+    if(r.top<vH*.88){
+      if(el.classList.contains('gi'))setTimeout(()=>el.classList.add('vis'),i%6*50);
+      else el.classList.add('vis');
+    }
+  });
+}
+
+/* PARALLAX on commission images */
+function parallax(){
+  document.querySelectorAll('.cimg img').forEach(img=>{
+    const r=img.closest('.cimg').getBoundingClientRect();
+    const p=(window.innerHeight-r.top)/(window.innerHeight+r.height);
+    img.style.transform=`scale(1.06) translateY(${(p-.5)*24}px)`;
+  });
+}
+
+/* COUNTERS */
+function counters(){
+  document.querySelectorAll('.cnt').forEach(el=>{
+    if(el._done)return;
+    const r=el.getBoundingClientRect();
+    if(r.top<window.innerHeight*.85){
+      el._done=true;
+      const tgt=+el.dataset.t;
+      let v=0;const s=Math.max(1,Math.ceil(tgt/50));
+      const t=setInterval(()=>{v=Math.min(v+s,tgt);el.textContent=v;if(v>=tgt)clearInterval(t);},28);
+    }
+  });
+}
+
+let tk=false;
+window.addEventListener('scroll',()=>{
+  if(!tk){requestAnimationFrame(()=>{stZoom();reveal();parallax();counters();tk=false;});tk=true;}
+},{passive:true});
+stZoom();reveal();parallax();
+
+/* GALLERY filter */
+function fg(c,btn){
+  document.querySelectorAll('.gtab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.gi').forEach(el=>{
+    el.style.display=(c==='all'||el.dataset.c===c)?'':'none';
+  });
+}
+
+/* IMG lightbox */
+function oi(el){const img=el.querySelector('img');if(img){document.getElementById('ilbi').src=img.src;document.getElementById('ilb').classList.add('on');}}
+
+/* VIDEO lightbox */
+function pv(src){
+  const v=document.getElementById('vlbv');
+  v.src=src;v.load();v.play();
+  document.getElementById('vlb').classList.add('on');
+}
+function cv(){
+  const v=document.getElementById('vlbv');
+  v.pause();v.src='';
+  document.getElementById('vlb').classList.remove('on');
+}
+document.getElementById('vlb').addEventListener('click',e=>{if(e.target===e.currentTarget)cv();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){cv();document.getElementById('ilb').classList.remove('on');}});
+
+/* VIDEO hover preview */
+document.querySelectorAll('.vcard').forEach(c=>{
+  const v=c.querySelector('video');if(!v)return;
+  c.addEventListener('mouseenter',()=>{v.muted=true;v.play().catch(()=>{});});
+  c.addEventListener('mouseleave',()=>{v.pause();v.currentTime=0;});
+});
+</script>
+</body>
+</html>
