@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Correcteur QCM — PHA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- Tesseract.js : moteur de reconnaissance de caractères (OCR) -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+:root{
+  --bg:#0c0c0c; --bg2:#141414; --bg3:#1c1c1c;
+  --cream:#e8e3db; --muted:#8a847b; --line:rgba(255,255,255,.09);
+  --teal:#28C8D6; --green:#3fd07a; --red:#ff5964; --amber:#f5b942;
+  --serif:'Playfair Display',Georgia,serif;
+  --sans:'DM Sans',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg);color:var(--cream);font-family:var(--sans);-webkit-text-size-adjust:100%}
+body{padding-bottom:60px}
+a{color:var(--teal)}
+h1,h2,h3{font-family:var(--serif);font-weight:700;letter-spacing:-.02em}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:50;background:rgba(12,12,12,.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-family:var(--serif);font-weight:900;font-size:1.05rem;text-decoration:none;color:var(--cream)}
+.brand em{color:var(--teal);font-style:italic}
+.back{font-size:.78rem;color:var(--muted);text-decoration:none}
+.back:hover{color:var(--cream)}
+
+.wrap{max-width:920px;margin:0 auto;padding:22px 18px}
+.lead{color:var(--muted);font-size:.9rem;line-height:1.65;margin:6px 0 22px;font-weight:300}
+
+/* STEPS NAV */
+.steps{display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap}
+.step-btn{flex:1;min-width:120px;background:var(--bg2);border:1px solid var(--line);color:var(--muted);border-radius:12px;padding:11px 10px;font-family:var(--sans);font-size:.8rem;cursor:pointer;transition:.2s;text-align:left;line-height:1.3}
+.step-btn .n{display:block;font-family:var(--serif);font-size:1.1rem;color:var(--cream);opacity:.4}
+.step-btn.active{border-color:var(--teal);background:var(--bg3)}
+.step-btn.active,.step-btn.active .n{color:var(--cream);opacity:1}
+.step-btn.active .n{color:var(--teal)}
+.step-btn.done .n{color:var(--green)}
+
+.panel{display:none}
+.panel.active{display:block;animation:fade .3s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px}
+.card h2{font-size:1.25rem;margin-bottom:4px}
+.card .hint{color:var(--muted);font-size:.82rem;line-height:1.6;margin-bottom:16px;font-weight:300}
+
+/* CONFIG */
+.cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:8px}
+.field label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
+.field input,.field select{width:100%;background:var(--bg3);border:1px solid var(--line);color:var(--cream);border-radius:10px;padding:10px 12px;font-family:var(--sans);font-size:.9rem}
+.field input:focus,.field select:focus{outline:none;border-color:var(--teal)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--teal);color:#062023;border:none;border-radius:100px;padding:12px 22px;font-family:var(--sans);font-weight:600;font-size:.86rem;cursor:pointer;transition:.2s}
+.btn:hover{opacity:.88}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--cream)}
+.btn.ghost:hover{border-color:var(--cream)}
+.btn.sm{padding:8px 16px;font-size:.78rem}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px}
+
+/* KEY GRID */
+.answers-grid{display:grid;gap:7px;margin-top:6px}
+.acell{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--line);border-radius:9px;padding:5px 7px}
+.acell .qn{font-size:.68rem;color:var(--muted);width:22px;flex-shrink:0;font-variant-numeric:tabular-nums}
+.acell input{width:100%;background:transparent;border:none;color:var(--cream);font-family:var(--sans);font-weight:600;font-size:.95rem;text-align:center;text-transform:uppercase}
+.acell input:focus{outline:none}
+.acell.filled{border-color:rgba(40,200,214,.4)}
+
+textarea.paste{width:100%;background:var(--bg3);border:1px solid var(--line);color:var(--cream);border-radius:10px;padding:12px;font-family:var(--sans);font-size:.9rem;min-height:70px;resize:vertical}
+
+/* CAMERA */
+.cam-stage{position:relative;background:#000;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+#video{width:100%;display:block;max-height:60vh;object-fit:contain;background:#000}
+#editCanvas{width:100%;display:block;touch-action:none;cursor:crosshair}
+.hidden{display:none!important}
+
+.tip{background:rgba(40,200,214,.08);border:1px solid rgba(40,200,214,.25);border-radius:10px;padding:11px 14px;font-size:.8rem;color:var(--cream);line-height:1.55;margin:12px 0;font-weight:300}
+.tip b{font-weight:600;color:var(--teal)}
+
+/* PROGRESS */
+.progress{margin-top:14px}
+.bar{height:6px;background:var(--bg3);border-radius:10px;overflow:hidden}
+.bar span{display:block;height:100%;width:0;background:var(--teal);transition:width .25s}
+.progress .lbl{font-size:.78rem;color:var(--muted);margin-top:7px}
+
+/* CORRECTION GRID */
+.result-grid{display:grid;gap:7px;margin-top:14px}
+.rcell{position:relative;background:var(--bg3);border:1px solid var(--line);border-radius:10px;padding:7px 4px;text-align:center;cursor:pointer;user-select:none;transition:.12s}
+.rcell:hover{border-color:var(--cream)}
+.rcell .rqn{font-size:.6rem;color:var(--muted);display:block;margin-bottom:1px}
+.rcell .rletter{font-family:var(--serif);font-weight:700;font-size:1.35rem;line-height:1;display:block}
+.rcell .rkey{font-size:.58rem;color:var(--muted);display:block;margin-top:2px}
+.rcell.ok{border-color:rgba(63,208,122,.55);background:rgba(63,208,122,.08)}
+.rcell.ok .rletter{color:var(--green)}
+.rcell.bad{border-color:rgba(255,89,100,.5);background:rgba(255,89,100,.08)}
+.rcell.bad .rletter{color:var(--red)}
+.rcell.empty .rletter{color:var(--muted);opacity:.5}
+.rcell .mark{position:absolute;top:3px;right:5px;font-size:.7rem;font-weight:700}
+.rcell.ok .mark{color:var(--green)}
+.rcell.bad .mark{color:var(--red)}
+
+/* SCORE */
+.score-hero{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-bottom:8px}
+.score-big{font-family:var(--serif);font-weight:900;font-size:3.4rem;line-height:1}
+.score-big small{font-size:1.3rem;color:var(--muted)}
+.score-meta{color:var(--muted);font-size:.9rem;line-height:1.7}
+.score-meta b{color:var(--cream)}
+.pct-ring{--v:0;width:96px;height:96px;border-radius:50%;background:conic-gradient(var(--teal) calc(var(--v)*1%),var(--bg3) 0);display:grid;place-items:center;flex-shrink:0}
+.pct-ring i{width:74px;height:74px;border-radius:50%;background:var(--bg2);display:grid;place-items:center;font-family:var(--serif);font-weight:700;font-size:1.3rem;font-style:normal}
+.errlist{margin-top:14px;font-size:.85rem;color:var(--muted);line-height:1.8}
+.errlist b{color:var(--red)}
+
+.foot-note{color:var(--muted);font-size:.74rem;line-height:1.6;margin-top:18px;font-weight:300}
+
+@media print{
+  header,.steps,.btn,.btn-row,.tip,.foot-note,.cam-stage{display:none!important}
+  body{background:#fff;color:#000}
+  .card{border:1px solid #ccc;background:#fff}
+  .rcell{border:1px solid #999}
+}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="index.html">PHA<em>.</em></a>
+  <a class="back" href="index.html">← Retour au site</a>
+</header>
+
+<div class="wrap">
+  <h1 style="font-size:clamp(1.8rem,5vw,2.6rem)">Correcteur de QCM</h1>
+  <p class="lead">Prends en photo la grille de réponses d'un étudiant : l'app lit les lettres, les compare à ton corrigé, et affiche pour chaque question <b style="color:var(--green)">V (juste)</b> ou <b style="color:var(--red)">F (faux)</b>, puis le score.</p>
+
+  <div class="steps">
+    <button class="step-btn active" data-step="0"><span class="n">1</span>Corrigé</button>
+    <button class="step-btn" data-step="1"><span class="n">2</span>Photo</button>
+    <button class="step-btn" data-step="2"><span class="n">3</span>Lecture &amp; correction</button>
+    <button class="step-btn" data-step="3"><span class="n">4</span>Résultat</button>
+  </div>
+
+  <!-- ÉTAPE 1 : CORRIGÉ -->
+  <section class="panel active" data-panel="0">
+    <div class="card">
+      <h2>Réglages</h2>
+      <p class="hint">Adapte au format de tes feuilles. Par défaut : 60 questions, réponses parmi A–E.</p>
+      <div class="cfg">
+        <div class="field"><label>Nb de questions</label><input id="cfgN" type="number" min="1" max="200" value="60"></div>
+        <div class="field"><label>Lettres possibles</label><input id="cfgChoices" type="text" value="ABCDE"></div>
+        <div class="field"><label>Colonnes (grille)</label><input id="cfgCols" type="number" min="1" max="20" value="6"></div>
+        <div class="field"><label>Ordre des n°</label>
+          <select id="cfgOrder">
+            <option value="col">Par colonnes (Q1 en haut à gauche, descend)</option>
+            <option value="row">Par lignes (Q1 à gauche, va à droite)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Grille de correction</h2>
+      <p class="hint">Saisis la bonne réponse de chaque question. Tu peux aussi coller une liste (ex&nbsp;: <code>A B C D ...</code> ou <code>1:A 2:C ...</code>) puis cliquer « Remplir ». Le corrigé est mémorisé dans ce navigateur.</p>
+      <textarea class="paste" id="pasteKey" placeholder="Colle ici : A B C D E A ...  (ou 1:A 2:B 3:C ...)"></textarea>
+      <div class="btn-row">
+        <button class="btn sm ghost" id="btnFillPaste">Remplir depuis le texte</button>
+        <button class="btn sm ghost" id="btnSaveKey">💾 Enregistrer</button>
+        <button class="btn sm ghost" id="btnClearKey">Vider</button>
+        <span id="keySavedMsg" style="font-size:.78rem;color:var(--green)"></span>
+      </div>
+      <div class="answers-grid" id="keyGrid" style="margin-top:16px"></div>
+      <div class="btn-row" style="margin-top:18px">
+        <button class="btn" id="btnToPhoto">Continuer → Photo</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÉTAPE 2 : PHOTO -->
+  <section class="panel" data-panel="1">
+    <div class="card">
+      <h2>Photo de la copie</h2>
+      <p class="hint">Prends la photo bien à plat, cadrée sur le bloc des réponses, avec un bon éclairage.</p>
+      <div class="btn-row">
+        <button class="btn sm" id="btnStartCam">📷 Ouvrir la caméra</button>
+        <button class="btn sm ghost" id="btnCapture" disabled>Capturer</button>
+        <label class="btn sm ghost" style="cursor:pointer">📁 Importer une photo
+          <input id="fileInput" type="file" accept="image/*" capture="environment" class="hidden">
+        </label>
+      </div>
+
+      <div class="cam-stage" id="camStage" style="margin-top:14px">
+        <video id="video" class="hidden" playsinline muted></video>
+        <canvas id="editCanvas" class="hidden"></canvas>
+        <div id="camPlaceholder" style="padding:48px 20px;text-align:center;color:var(--muted);font-size:.85rem">Aucune image. Ouvre la caméra ou importe une photo.</div>
+      </div>
+
+      <div class="tip" id="alignTip" style="display:none">
+        <b>Cale la grille&nbsp;:</b> déplace les <b>4 points</b> pour qu'ils tombent exactement sur les 4 coins du bloc de réponses (1re case en haut-gauche, dernière en bas-droite). Le quadrillage doit coïncider avec les cases.
+      </div>
+
+      <div class="btn-row" id="ocrRow" style="display:none">
+        <button class="btn" id="btnReadOCR">🔍 Lire les réponses (IA)</button>
+        <button class="btn ghost" id="btnSkipOCR">Saisir à la main</button>
+      </div>
+
+      <div class="progress hidden" id="ocrProgress">
+        <div class="bar"><span id="ocrBar"></span></div>
+        <div class="lbl" id="ocrLbl">Préparation…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÉTAPE 3 : CORRECTION -->
+  <section class="panel" data-panel="2">
+    <div class="card">
+      <h2>Vérifie les réponses lues</h2>
+      <p class="hint">L'IA a pré-rempli les lettres. <b>Touche une case pour changer la lettre</b> (elle défile A → B → … → vide). Vert = juste, rouge = faux, selon ton corrigé.</p>
+      <div class="result-grid" id="resGrid"></div>
+      <div class="btn-row" style="margin-top:18px">
+        <button class="btn" id="btnToResult">Voir le résultat →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÉTAPE 4 : RÉSULTAT -->
+  <section class="panel" data-panel="3">
+    <div class="card">
+      <h2>Résultat</h2>
+      <div class="score-hero" style="margin-top:12px">
+        <div class="pct-ring" id="pctRing"><i id="pctTxt">0%</i></div>
+        <div>
+          <div class="score-big"><span id="scoreNum">0</span><small>/<span id="scoreDen">60</span></small></div>
+          <div class="score-meta" id="scoreMeta"></div>
+        </div>
+      </div>
+      <div class="errlist" id="errList"></div>
+      <div class="btn-row" style="margin-top:20px">
+        <button class="btn ghost sm" id="btnPrint">🖨️ Imprimer / PDF</button>
+        <button class="btn ghost sm" id="btnCopy">📋 Copier le récap</button>
+        <button class="btn sm" id="btnNext">Copie suivante</button>
+      </div>
+      <p class="foot-note">Astuce&nbsp;: le corrigé reste enregistré. Pour la copie suivante, garde le même corrigé et reprends juste une photo.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+"use strict";
+/* ---------------- État global ---------------- */
+const S = {
+  n: 60, choices: 'ABCDE', cols: 6, rows: 10, order: 'col',
+  key: [], answers: [],
+  corners: null,        // [{x,y}] x4 en coords canvas
+  img: null,            // ImageBitmap / canvas source
+  srcCanvas: null,
+};
+const $ = id => document.getElementById(id);
+
+/* ---------------- Navigation étapes ---------------- */
+const stepBtns = [...document.querySelectorAll('.step-btn')];
+const panels = [...document.querySelectorAll('.panel')];
+function goStep(i){
+  stepBtns.forEach((b,k)=>b.classList.toggle('active', k===i));
+  panels.forEach((p,k)=>p.classList.toggle('active', k===i));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+stepBtns.forEach((b,i)=>b.addEventListener('click',()=>goStep(i)));
+
+/* ---------------- Config ---------------- */
+function readConfig(){
+  S.n = Math.max(1, parseInt($('cfgN').value)||60);
+  S.choices = ($('cfgChoices').value||'ABCDE').toUpperCase().replace(/[^A-Z0-9]/g,'') || 'ABCDE';
+  S.cols = Math.max(1, parseInt($('cfgCols').value)||6);
+  S.rows = Math.ceil(S.n / S.cols);
+  S.order = $('cfgOrder').value;
+  $('scoreDen').textContent = S.n;
+}
+['cfgN','cfgChoices','cfgCols','cfgOrder'].forEach(id=>$(id).addEventListener('change',()=>{readConfig();buildKeyGrid();}));
+
+/* ---------------- Grille du corrigé ---------------- */
+function buildKeyGrid(){
+  readConfig();
+  const g = $('keyGrid');
+  g.style.gridTemplateColumns = `repeat(${Math.min(S.cols, S.n)}, 1fr)`;
+  g.innerHTML='';
+  if(S.key.length !== S.n) S.key = Array(S.n).fill('');
+  for(let i=0;i<S.n;i++){
+    const d=document.createElement('div');
+    d.className='acell'+(S.key[i]?' filled':'');
+    d.innerHTML=`<span class="qn">${i+1}</span><input maxlength="1" data-i="${i}" value="${S.key[i]||''}">`;
+    g.appendChild(d);
+  }
+  g.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input',e=>{
+      const i=+e.target.dataset.i;
+      let v=e.target.value.toUpperCase();
+      e.target.value=v;
+      S.key[i]=v;
+      e.target.closest('.acell').classList.toggle('filled', !!v);
+      if(v){ const nx=g.querySelector(`input[data-i="${i+1}"]`); if(nx) nx.focus(); }
+    });
+  });
+}
+
+$('btnFillPaste').addEventListener('click',()=>{
+  readConfig();
+  const raw = $('pasteKey').value.trim();
+  if(!raw) return;
+  const arr = Array(S.n).fill('');
+  // format "1:A 2:B" ?
+  const pairs = [...raw.matchAll(/(\d+)\s*[:.\-)]\s*([A-Za-z0-9])/g)];
+  if(pairs.length){
+    pairs.forEach(m=>{const q=+m[1]-1; if(q>=0&&q<S.n) arr[q]=m[2].toUpperCase();});
+  } else {
+    const toks = raw.toUpperCase().match(/[A-Z0-9]/g)||[];
+    toks.slice(0,S.n).forEach((c,i)=>arr[i]=c);
+  }
+  S.key=arr; buildKeyGrid();
+});
+
+const LS='pha_qcm_key_v1';
+$('btnSaveKey').addEventListener('click',()=>{
+  readConfig();
+  localStorage.setItem(LS, JSON.stringify({n:S.n,choices:S.choices,cols:S.cols,order:S.order,key:S.key}));
+  const m=$('keySavedMsg'); m.textContent='✓ Corrigé enregistré'; setTimeout(()=>m.textContent='',2500);
+});
+$('btnClearKey').addEventListener('click',()=>{S.key=Array(S.n).fill('');buildKeyGrid();});
+function loadKey(){
+  try{
+    const d=JSON.parse(localStorage.getItem(LS));
+    if(!d) return;
+    $('cfgN').value=d.n; $('cfgChoices').value=d.choices; $('cfgCols').value=d.cols; $('cfgOrder').value=d.order||'col';
+    readConfig(); S.key=d.key||Array(S.n).fill('');
+  }catch(e){}
+}
+$('btnToPhoto').addEventListener('click',()=>{
+  if(!S.key.some(k=>k)){ if(!confirm('Aucune réponse de corrigé saisie. Continuer quand même ?')) return; }
+  goStep(1);
+});
+
+/* ---------------- Caméra & import ---------------- */
+let stream=null;
+const video=$('video'), canvas=$('editCanvas'), ctx=canvas.getContext('2d');
+
+$('btnStartCam').addEventListener('click', async ()=>{
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+    video.srcObject=stream; await video.play();
+    $('camPlaceholder').classList.add('hidden');
+    video.classList.remove('hidden'); canvas.classList.add('hidden');
+    $('btnCapture').disabled=false;
+  }catch(e){
+    alert("Impossible d'ouvrir la caméra ("+e.message+"). Utilise « Importer une photo » à la place.");
+  }
+});
+$('btnCapture').addEventListener('click',()=>{
+  if(!video.videoWidth) return;
+  loadImageToCanvas(video, video.videoWidth, video.videoHeight);
+  stopCam();
+});
+$('fileInput').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const img=new Image();
+  img.onload=()=>{ loadImageToCanvas(img,img.naturalWidth,img.naturalHeight); URL.revokeObjectURL(img.src); };
+  img.src=URL.createObjectURL(f);
+  stopCam();
+});
+
+function stopCam(){ if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;} video.classList.add('hidden'); $('btnCapture').disabled=true; }
+
+function loadImageToCanvas(src, w, h){
+  // limite la taille de travail
+  const MAX=1600, scale=Math.min(1, MAX/Math.max(w,h));
+  canvas.width=Math.round(w*scale); canvas.height=Math.round(h*scale);
+  ctx.drawImage(src,0,0,canvas.width,canvas.height);
+  S.srcCanvas=document.createElement('canvas');
+  S.srcCanvas.width=canvas.width; S.srcCanvas.height=canvas.height;
+  S.srcCanvas.getContext('2d').drawImage(canvas,0,0);
+  $('camPlaceholder').classList.add('hidden');
+  video.classList.add('hidden'); canvas.classList.remove('hidden');
+  // coins par défaut : marge 12%
+  const mx=canvas.width*0.12, my=canvas.height*0.12;
+  S.corners=[{x:mx,y:my},{x:canvas.width-mx,y:my},{x:canvas.width-mx,y:canvas.height-my},{x:mx,y:canvas.height-my}];
+  $('alignTip').style.display='block';
+  $('ocrRow').style.display='flex';
+  drawOverlay();
+}
+
+/* ---- overlay quadrillage + coins ---- */
+function bilerp(u,v){
+  const [TL,TR,BR,BL]=S.corners;
+  const top={x:TL.x+(TR.x-TL.x)*u, y:TL.y+(TR.y-TL.y)*u};
+  const bot={x:BL.x+(BR.x-BL.x)*u, y:BL.y+(BR.y-BL.y)*u};
+  return {x:top.x+(bot.x-top.x)*v, y:top.y+(bot.y-top.y)*v};
+}
+function drawOverlay(){
+  if(!S.srcCanvas) return;
+  readConfig();
+  ctx.drawImage(S.srcCanvas,0,0);
+  ctx.lineWidth=Math.max(1,canvas.width/500);
+  ctx.strokeStyle='rgba(40,200,214,.55)';
+  // lignes verticales
+  for(let c=0;c<=S.cols;c++){const u=c/S.cols;ctx.beginPath();const a=bilerp(u,0),b=bilerp(u,1);ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+  for(let r=0;r<=S.rows;r++){const v=r/S.rows;ctx.beginPath();const a=bilerp(0,v),b=bilerp(1,v);ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+  // coins
+  const R=Math.max(10,canvas.width/45);
+  S.corners.forEach((p,i)=>{
+    ctx.beginPath();ctx.arc(p.x,p.y,R,0,7);ctx.fillStyle='rgba(40,200,214,.9)';ctx.fill();
+    ctx.fillStyle='#062023';ctx.font=`bold ${R}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(['◤','◥','◢','◣'][i],p.x,p.y);
+  });
+}
+
+/* ---- drag des coins ---- */
+let drag=-1;
+function evtPos(e){
+  const r=canvas.getBoundingClientRect();
+  const cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+  const cy=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+  return {x:cx*canvas.width/r.width, y:cy*canvas.height/r.height};
+}
+function startDrag(e){
+  if(!S.corners) return;
+  const p=evtPos(e); let best=-1,bd=1e9;
+  S.corners.forEach((c,i)=>{const d=Math.hypot(c.x-p.x,c.y-p.y); if(d<bd){bd=d;best=i;}});
+  const R=Math.max(24,canvas.width/25);
+  if(bd<R*1.6){drag=best;e.preventDefault();}
+}
+function moveDrag(e){ if(drag<0) return; const p=evtPos(e); S.corners[drag]={x:Math.max(0,Math.min(canvas.width,p.x)),y:Math.max(0,Math.min(canvas.height,p.y))}; drawOverlay(); e.preventDefault(); }
+function endDrag(){drag=-1;}
+canvas.addEventListener('mousedown',startDrag); canvas.addEventListener('mousemove',moveDrag); window.addEventListener('mouseup',endDrag);
+canvas.addEventListener('touchstart',startDrag,{passive:false}); canvas.addEventListener('touchmove',moveDrag,{passive:false}); canvas.addEventListener('touchend',endDrag);
+
+/* ---------------- Mapping cellule → n° question ---------------- */
+function cellToQ(r,c){ return S.order==='col' ? c*S.rows + r : r*S.cols + c; }
+
+/* ---------------- OCR ---------------- */
+$('btnSkipOCR').addEventListener('click',()=>{ if(!S.answers.length) S.answers=Array(S.n).fill(''); buildResGrid(); goStep(2); });
+
+$('btnReadOCR').addEventListener('click', async ()=>{
+  if(!S.srcCanvas) return;
+  readConfig();
+  const prog=$('ocrProgress'), bar=$('ocrBar'), lbl=$('ocrLbl');
+  prog.classList.remove('hidden'); bar.style.width='0%'; lbl.textContent='Chargement du moteur IA…';
+  $('btnReadOCR').disabled=true;
+
+  let worker;
+  try{
+    worker = await Tesseract.createWorker('eng',1,{logger:()=>{}});
+    await worker.setParameters({ tessedit_char_whitelist:S.choices, tessedit_pageseg_mode:'10' });
+  }catch(e){ alert("Le moteur IA n'a pas pu se charger (réseau ?). Tu peux saisir à la main."); prog.classList.add('hidden'); $('btnReadOCR').disabled=false; return; }
+
+  S.answers=Array(S.n).fill('');
+  const total=S.n; let done=0;
+  const tmp=document.createElement('canvas'), tctx=tmp.getContext('2d',{willReadFrequently:true});
+
+  for(let r=0;r<S.rows;r++){
+    for(let c=0;c<S.cols;c++){
+      const q=cellToQ(r,c);
+      if(q>=S.n) continue;
+      const letter = await ocrCell(worker,tmp,tctx,r,c);
+      S.answers[q]=letter;
+      done++;
+      bar.style.width=(done/total*100)+'%';
+      lbl.textContent=`Lecture case ${done}/${total}…`;
+    }
+  }
+  await worker.terminate();
+  lbl.textContent='Lecture terminée ✓';
+  buildResGrid(); goStep(2);
+  $('btnReadOCR').disabled=false;
+});
+
+async function ocrCell(worker,tmp,tctx,r,c){
+  // quad de la cellule, resserré de 18% pour éviter les bords
+  const pad=0.18;
+  const u0=(c+pad)/S.cols, u1=(c+1-pad)/S.cols, v0=(r+pad)/S.rows, v1=(r+1-pad)/S.rows;
+  const P=[bilerp(u0,v0),bilerp(u1,v0),bilerp(u1,v1),bilerp(u0,v1)];
+  const minX=Math.min(...P.map(p=>p.x)), maxX=Math.max(...P.map(p=>p.x));
+  const minY=Math.min(...P.map(p=>p.y)), maxY=Math.max(...P.map(p=>p.y));
+  const w=Math.max(4,Math.round(maxX-minX)), h=Math.max(4,Math.round(maxY-minY));
+  const SCALE=Math.max(1, Math.round(90/Math.max(w,h)));
+  tmp.width=w*SCALE; tmp.height=h*SCALE;
+  tctx.imageSmoothingEnabled=true;
+  tctx.drawImage(S.srcCanvas,minX,minY,w,h,0,0,tmp.width,tmp.height);
+  // seuillage n&b
+  const im=tctx.getImageData(0,0,tmp.width,tmp.height), d=im.data;
+  let sum=0; for(let i=0;i<d.length;i+=4){const g=0.3*d[i]+0.59*d[i+1]+0.11*d[i+2];d[i]=d[i+1]=d[i+2]=g;sum+=g;}
+  const thr=(sum/(d.length/4))*0.8;
+  let ink=0;
+  for(let i=0;i<d.length;i+=4){const v=d[i]<thr?0:255;d[i]=d[i+1]=d[i+2]=v;if(v===0)ink++;}
+  tctx.putImageData(im,0,0);
+  if(ink < tmp.width*tmp.height*0.008) return ''; // case quasi vide
+  try{
+    const {data}=await worker.recognize(tmp);
+    const t=(data.text||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    for(const ch of t){ if(S.choices.includes(ch)) return ch; }
+  }catch(e){}
+  return '';
+}
+
+/* ---------------- Grille de correction éditable ---------------- */
+function buildResGrid(){
+  readConfig();
+  if(S.answers.length!==S.n){const a=Array(S.n).fill('');S.answers.forEach((v,i)=>{if(i<S.n)a[i]=v;});S.answers=a;}
+  const g=$('resGrid');
+  g.style.gridTemplateColumns=`repeat(${Math.min(S.cols,S.n)}, 1fr)`;
+  g.innerHTML='';
+  for(let i=0;i<S.n;i++){
+    const d=document.createElement('div');
+    d.dataset.i=i;
+    g.appendChild(d);
+    paintCell(d,i);
+    d.addEventListener('click',()=>{ cycleCell(i); paintCell(d,i); });
+  }
+}
+function statusOf(i){
+  const a=S.answers[i]||'', k=S.key[i]||'';
+  if(!a) return 'empty';
+  if(!k) return 'empty';
+  return a===k ? 'ok':'bad';
+}
+function paintCell(d,i){
+  const a=S.answers[i]||'', k=S.key[i]||'', st=statusOf(i);
+  d.className='rcell '+st;
+  const mark = st==='ok'?'✓': st==='bad'?'✗':'';
+  d.innerHTML=`<span class="rqn">Q${i+1}</span><span class="rletter">${a||'·'}</span><span class="rkey">${k?('corr: '+k):''}</span><span class="mark">${mark}</span>`;
+}
+function cycleCell(i){
+  const opts=['',...S.choices.split('')];
+  let idx=opts.indexOf(S.answers[i]||'');
+  idx=(idx+1)%opts.length;
+  S.answers[i]=opts[idx];
+}
+$('btnToResult').addEventListener('click',computeResult);
+
+/* ---------------- Résultat ---------------- */
+function computeResult(){
+  readConfig();
+  let correct=0, wrong=0, blank=0; const errs=[];
+  for(let i=0;i<S.n;i++){
+    const a=S.answers[i]||'', k=S.key[i]||'';
+    if(!a){blank++; if(k) errs.push(i+1); continue;}
+    if(!k) continue;
+    if(a===k) correct++; else {wrong++; errs.push(i+1);}
+  }
+  const graded=S.key.filter(x=>x).length || S.n;
+  const pct=Math.round(correct/graded*100);
+  $('scoreNum').textContent=correct;
+  $('scoreDen').textContent=graded;
+  $('pctTxt').textContent=pct+'%';
+  $('pctRing').style.setProperty('--v',pct);
+  const ring=$('pctRing');
+  const col = pct>=50?'var(--green)':pct>=30?'var(--amber)':'var(--red)';
+  ring.style.background=`conic-gradient(${col} calc(var(--v)*1%), var(--bg3) 0)`;
+  $('scoreMeta').innerHTML=`<b>${correct}</b> justes &nbsp;·&nbsp; <b>${wrong}</b> faux &nbsp;·&nbsp; <b>${blank}</b> sans réponse`;
+  $('errList').innerHTML = errs.length ? `<b>Questions ratées :</b> ${errs.join(', ')}` : '✓ Sans faute !';
+  goStep(3);
+}
+
+$('btnPrint').addEventListener('click',()=>window.print());
+$('btnCopy').addEventListener('click',()=>{
+  let lines=[`Score : ${$('scoreNum').textContent}/${$('scoreDen').textContent} (${$('pctTxt').textContent})`,''];
+  for(let i=0;i<S.n;i++){const st=statusOf(i);if(st!=='empty')lines.push(`Q${i+1}: ${S.answers[i]||'-'} (corr ${S.key[i]}) ${st==='ok'?'V':'F'}`);}
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{const b=$('btnCopy');const t=b.textContent;b.textContent='✓ Copié';setTimeout(()=>b.textContent=t,1800);});
+});
+$('btnNext').addEventListener('click',()=>{
+  S.answers=Array(S.n).fill(''); S.srcCanvas=null; S.corners=null;
+  canvas.classList.add('hidden'); $('camPlaceholder').classList.remove('hidden');
+  $('alignTip').style.display='none'; $('ocrRow').style.display='none'; $('ocrProgress').classList.add('hidden');
+  goStep(1);
+});
+
+/* ---------------- Init ---------------- */
+loadKey(); buildKeyGrid();
+</script>
+</body>
+</html>
