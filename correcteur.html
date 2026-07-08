@@ -183,6 +183,13 @@ textarea.paste{width:100%;background:var(--bg3);border:1px solid var(--line);col
     <div class="card">
       <h2>Photo de la copie</h2>
       <p class="hint">Prends la photo bien à plat, cadrée sur le bloc des réponses, avec un bon éclairage.</p>
+      <div class="field" style="max-width:420px;margin-bottom:14px">
+        <label>Mode de lecture</label>
+        <select id="cfgMode">
+          <option value="marks" selected>Compter tes marques rouges ✓ / ✗ (fiable)</option>
+          <option value="letters">Lire les lettres de l'étudiant (IA) + comparer au corrigé</option>
+        </select>
+      </div>
       <div class="btn-row">
         <button class="btn sm" id="btnStartCam">📷 Ouvrir la caméra</button>
         <button class="btn sm ghost" id="btnCapture" disabled>Capturer</button>
@@ -198,12 +205,12 @@ textarea.paste{width:100%;background:var(--bg3);border:1px solid var(--line);col
       </div>
 
       <div class="tip" id="alignTip" style="display:none">
-        <b>Cale la grille&nbsp;:</b> déplace les <b>4 points</b> pour qu'ils tombent exactement sur les 4 coins du bloc de réponses (1re case en haut-gauche, dernière en bas-droite). Le quadrillage doit coïncider avec les cases.
+        <b>Cale la grille&nbsp;:</b> déplace les <b>4 points</b> sur les 4 coins du bloc (1re question en haut-gauche, dernière en bas-droite). <span id="tipMode"></span> Chaque case du quadrillage doit contenir une seule marque.
       </div>
 
       <div class="btn-row" id="ocrRow" style="display:none">
-        <button class="btn" id="btnReadOCR">🔍 Lire les réponses (IA)</button>
-        <button class="btn ghost" id="btnSkipOCR">Saisir à la main</button>
+        <button class="btn" id="btnReadOCR">🔍 Analyser</button>
+        <button class="btn ghost" id="btnSkipOCR">Remplir à la main</button>
       </div>
 
       <div class="progress hidden" id="ocrProgress">
@@ -217,7 +224,7 @@ textarea.paste{width:100%;background:var(--bg3);border:1px solid var(--line);col
   <section class="panel" data-panel="2">
     <div class="card">
       <h2>Vérifie les réponses lues</h2>
-      <p class="hint">L'IA a pré-rempli les lettres. <b>Touche une case pour changer la lettre</b> (elle défile A → B → … → vide). Vert = juste, rouge = faux, selon ton corrigé.</p>
+      <p class="hint" id="resHint"></p>
       <div class="result-grid" id="resGrid"></div>
       <div class="btn-row" style="margin-top:18px">
         <button class="btn" id="btnToResult">Voir le résultat →</button>
@@ -251,7 +258,7 @@ textarea.paste{width:100%;background:var(--bg3);border:1px solid var(--line);col
 "use strict";
 /* ---------------- État global ---------------- */
 const S = {
-  n: 60, choices: 'ABCDE', cols: 6, rows: 10, order: 'col',
+  n: 60, choices: 'ABCDE', cols: 6, rows: 10, order: 'col', mode: 'marks',
   key: [], answers: [],
   corners: null,        // [{x,y}] x4 en coords canvas
   img: null,            // ImageBitmap / canvas source
@@ -288,9 +295,20 @@ function readConfig(){
   S.cols = Math.max(1, parseInt($('cfgCols').value)||6);
   S.rows = Math.ceil(S.n / S.cols);
   S.order = $('cfgOrder').value;
+  S.mode = $('cfgMode') ? $('cfgMode').value : S.mode;
   $('scoreDen').textContent = S.n;
 }
+function updateModeUI(){
+  const isMarks = ($('cfgMode') && $('cfgMode').value==='marks');
+  const tip=$('tipMode');
+  if(tip) tip.innerHTML = isMarks
+    ? "En mode <b>marques rouges</b>, cale la grille sur tes <b>✓/✗ rouges</b>."
+    : "En mode <b>lettres</b>, cale la grille sur les <b>lettres de l'étudiant</b>.";
+  const btn=$('btnReadOCR');
+  if(btn) btn.innerHTML = isMarks ? '🔍 Compter les ✓ / ✗' : '🔍 Lire les lettres (IA)';
+}
 ['cfgN','cfgChoices','cfgCols','cfgOrder'].forEach(id=>$(id).addEventListener('change',()=>{readConfig();buildKeyGrid();}));
+$('cfgMode').addEventListener('change',()=>{readConfig();updateModeUI();if(S.srcCanvas)drawOverlay();});
 
 /* ---------------- Grille du corrigé ---------------- */
 function buildKeyGrid(){
@@ -453,9 +471,69 @@ function cellToQ(r,c){ return S.order==='col' ? c*S.rows + r : r*S.cols + c; }
 /* ---------------- OCR ---------------- */
 $('btnSkipOCR').addEventListener('click',()=>{ if(!S.answers.length) S.answers=Array(S.n).fill(''); buildResGrid(); goStep(2); });
 
-$('btnReadOCR').addEventListener('click', async ()=>{
+$('btnReadOCR').addEventListener('click', ()=>{
   if(!S.srcCanvas) return;
   readConfig();
+  if(S.mode==='marks') return detectAllMarks();
+  return runOCR();
+});
+
+/* ===== MODE B : détection des marques rouges ✓ / ✗ ===== */
+function detectAllMarks(){
+  const prog=$('ocrProgress'), bar=$('ocrBar'), lbl=$('ocrLbl');
+  prog.classList.remove('hidden'); lbl.textContent='Analyse des marques rouges…';
+  S.answers=Array(S.n).fill('');
+  const tmp=document.createElement('canvas'), tctx=tmp.getContext('2d',{willReadFrequently:true});
+  let done=0;
+  for(let r=0;r<S.rows;r++){
+    for(let c=0;c<S.cols;c++){
+      const q=cellToQ(r,c); if(q>=S.n) continue;
+      S.answers[q]=detectMark(tmp,tctx,r,c);
+      done++; bar.style.width=(done/S.n*100)+'%';
+    }
+  }
+  lbl.textContent='Analyse terminée ✓';
+  buildResGrid(); goStep(2);
+}
+
+/* renvoie 'V' (✓), 'F' (✗) ou '' selon la marque rouge trouvée dans la case */
+function detectMark(tmp,tctx,r,c){
+  const pad=0.10;
+  const u0=(c+pad)/S.cols,u1=(c+1-pad)/S.cols,v0=(r+pad)/S.rows,v1=(r+1-pad)/S.rows;
+  const P=[bilerp(u0,v0),bilerp(u1,v0),bilerp(u1,v1),bilerp(u0,v1)];
+  const minX=Math.floor(Math.min(...P.map(p=>p.x))),maxX=Math.ceil(Math.max(...P.map(p=>p.x)));
+  const minY=Math.floor(Math.min(...P.map(p=>p.y))),maxY=Math.ceil(Math.max(...P.map(p=>p.y)));
+  const w=Math.max(4,maxX-minX),h=Math.max(4,maxY-minY);
+  tmp.width=w; tmp.height=h;
+  tctx.drawImage(S.srcCanvas,minX,minY,w,h,0,0,w,h);
+  const d=tctx.getImageData(0,0,w,h).data;
+  // masque des pixels rouges
+  let n=0,sx=0,sy=0,mnx=w,mny=h,mxx=0,mxy=0;
+  const pts=[];
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const i=(y*w+x)*4, R=d[i],G=d[i+1],B=d[i+2];
+    if(R>100 && R-G>40 && R-B>40){
+      n++; sx+=x; sy+=y; pts.push(x,y);
+      if(x<mnx)mnx=x; if(x>mxx)mxx=x; if(y<mny)mny=y; if(y>mxy)mxy=y;
+    }
+  }
+  if(n < w*h*0.004 || n<12) return ''; // pas de marque
+  // classification ✓ vs ✗ sur la boîte englobante de l'encre rouge
+  const bw=Math.max(1,mxx-mnx), BH=Math.max(1,mxy-mny);
+  let tl=0,tr=0,bl=0,br=0;
+  for(let k=0;k<pts.length;k+=2){
+    const px=(pts[k]-mnx)/bw, py=(pts[k+1]-mny)/BH;
+    if(py<0.5){ (px<0.5?tl++:tr++); } else { (px<0.5?bl++:br++); }
+  }
+  // Un ✗ possède de l'encre dans les DEUX coins supérieurs ;
+  // un ✓ a le coin haut-gauche quasi vide (bras court) et le haut-droit chargé.
+  const topL=tl/n, topR=tr/n;
+  const isX = topL>0.12 && topR>0.10 && topL > 0.45*topR;
+  return isX ? 'F' : 'V';
+}
+
+/* ===== MODE A : OCR des lettres ===== */
+async function runOCR(){
   const prog=$('ocrProgress'), bar=$('ocrBar'), lbl=$('ocrLbl');
   prog.classList.remove('hidden'); bar.style.width='0%'; lbl.textContent='Chargement du moteur IA…';
   $('btnReadOCR').disabled=true;
@@ -485,7 +563,7 @@ $('btnReadOCR').addEventListener('click', async ()=>{
   lbl.textContent='Lecture terminée ✓';
   buildResGrid(); goStep(2);
   $('btnReadOCR').disabled=false;
-});
+}
 
 async function ocrCell(worker,tmp,tctx,r,c){
   // quad de la cellule, resserré de 18% pour éviter les bords
@@ -519,6 +597,9 @@ async function ocrCell(worker,tmp,tctx,r,c){
 function buildResGrid(){
   readConfig();
   if(S.answers.length!==S.n){const a=Array(S.n).fill('');S.answers.forEach((v,i)=>{if(i<S.n)a[i]=v;});S.answers=a;}
+  $('resHint').innerHTML = S.mode==='marks'
+    ? "Marques ✓/✗ détectées. <b>Touche une case pour changer</b> (✓ → ✗ → vide). Vérifie les cases douteuses, puis affiche le résultat."
+    : "L'IA a pré-rempli les lettres. <b>Touche une case pour changer la lettre</b> (A → B → … → vide). Vert = juste, rouge = faux, selon ton corrigé.";
   const g=$('resGrid');
   g.style.gridTemplateColumns=`repeat(${Math.min(S.cols,S.n)}, 1fr)`;
   g.innerHTML='';
@@ -531,19 +612,30 @@ function buildResGrid(){
   }
 }
 function statusOf(i){
-  const a=S.answers[i]||'', k=S.key[i]||'';
-  if(!a) return 'empty';
-  if(!k) return 'empty';
+  const a=S.answers[i]||'';
+  if(S.mode==='marks'){
+    if(a==='V') return 'ok';
+    if(a==='F') return 'bad';
+    return 'empty';
+  }
+  const k=S.key[i]||'';
+  if(!a||!k) return 'empty';
   return a===k ? 'ok':'bad';
 }
 function paintCell(d,i){
-  const a=S.answers[i]||'', k=S.key[i]||'', st=statusOf(i);
+  const st=statusOf(i);
   d.className='rcell '+st;
+  if(S.mode==='marks'){
+    const sym = st==='ok'?'✓': st==='bad'?'✗':'·';
+    d.innerHTML=`<span class="rqn">Q${i+1}</span><span class="rletter">${sym}</span><span class="rkey"></span>`;
+    return;
+  }
+  const a=S.answers[i]||'', k=S.key[i]||'';
   const mark = st==='ok'?'✓': st==='bad'?'✗':'';
   d.innerHTML=`<span class="rqn">Q${i+1}</span><span class="rletter">${a||'·'}</span><span class="rkey">${k?('corr: '+k):''}</span><span class="mark">${mark}</span>`;
 }
 function cycleCell(i){
-  const opts=['',...S.choices.split('')];
+  const opts = S.mode==='marks' ? ['','V','F'] : ['',...S.choices.split('')];
   let idx=opts.indexOf(S.answers[i]||'');
   idx=(idx+1)%opts.length;
   S.answers[i]=opts[idx];
@@ -555,12 +647,17 @@ function computeResult(){
   readConfig();
   let correct=0, wrong=0, blank=0; const errs=[];
   for(let i=0;i<S.n;i++){
-    const a=S.answers[i]||'', k=S.key[i]||'';
-    if(!a){blank++; if(k) errs.push(i+1); continue;}
-    if(!k) continue;
-    if(a===k) correct++; else {wrong++; errs.push(i+1);}
+    if(S.mode==='marks'){
+      const a=S.answers[i]||'';
+      if(a==='V') correct++; else if(a==='F'){wrong++;errs.push(i+1);} else blank++;
+    } else {
+      const a=S.answers[i]||'', k=S.key[i]||'';
+      if(!a){blank++; if(k) errs.push(i+1); continue;}
+      if(!k) continue;
+      if(a===k) correct++; else {wrong++; errs.push(i+1);}
+    }
   }
-  const graded=S.key.filter(x=>x).length || S.n;
+  const graded = S.mode==='marks' ? S.n : (S.key.filter(x=>x).length||S.n);
   const pct=Math.round(correct/graded*100);
   $('scoreNum').textContent=correct;
   $('scoreDen').textContent=graded;
@@ -569,7 +666,9 @@ function computeResult(){
   const ring=$('pctRing');
   const col = pct>=50?'var(--green)':pct>=30?'var(--amber)':'var(--red)';
   ring.style.background=`conic-gradient(${col} calc(var(--v)*1%), var(--bg3) 0)`;
-  $('scoreMeta').innerHTML=`<b>${correct}</b> justes &nbsp;·&nbsp; <b>${wrong}</b> faux &nbsp;·&nbsp; <b>${blank}</b> sans réponse`;
+  $('scoreMeta').innerHTML = S.mode==='marks'
+    ? `<b>${correct}</b> ✓ justes &nbsp;·&nbsp; <b>${wrong}</b> ✗ faux &nbsp;·&nbsp; <b>${blank}</b> non marquées`
+    : `<b>${correct}</b> justes &nbsp;·&nbsp; <b>${wrong}</b> faux &nbsp;·&nbsp; <b>${blank}</b> sans réponse`;
   $('errList').innerHTML = errs.length ? `<b>Questions ratées :</b> ${errs.join(', ')}` : '✓ Sans faute !';
   goStep(3);
 }
@@ -577,7 +676,8 @@ function computeResult(){
 $('btnPrint').addEventListener('click',()=>window.print());
 $('btnCopy').addEventListener('click',()=>{
   let lines=[`Score : ${$('scoreNum').textContent}/${$('scoreDen').textContent} (${$('pctTxt').textContent})`,''];
-  for(let i=0;i<S.n;i++){const st=statusOf(i);if(st!=='empty')lines.push(`Q${i+1}: ${S.answers[i]||'-'} (corr ${S.key[i]}) ${st==='ok'?'V':'F'}`);}
+  for(let i=0;i<S.n;i++){const st=statusOf(i);if(st==='empty')continue;
+    lines.push(S.mode==='marks' ? `Q${i+1}: ${st==='ok'?'V':'F'}` : `Q${i+1}: ${S.answers[i]||'-'} (corr ${S.key[i]}) ${st==='ok'?'V':'F'}`);}
   navigator.clipboard.writeText(lines.join('\n')).then(()=>{const b=$('btnCopy');const t=b.textContent;b.textContent='✓ Copié';setTimeout(()=>b.textContent=t,1800);});
 });
 $('btnNext').addEventListener('click',()=>{
@@ -588,7 +688,7 @@ $('btnNext').addEventListener('click',()=>{
 });
 
 /* ---------------- Init ---------------- */
-loadKey(); buildKeyGrid();
+loadKey(); buildKeyGrid(); updateModeUI();
 </script>
 </body>
 </html>
